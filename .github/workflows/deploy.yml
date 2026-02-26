@@ -29,20 +29,24 @@ jobs:
 
       - name: 停止 IIS 網站
         run: |
+          Get-Process -Name "w3wp" -ErrorAction SilentlyContinue | Stop-Process -Force
+          Start-Sleep -Seconds 3
           Import-Module WebAdministration
+          Stop-WebAppPool -Name "EquipmentBorrowingSystem"
           Stop-WebSite -Name "EquipmentBorrowingSystem"
+          Start-Sleep -Seconds 3
         shell: powershell
 
       - name: 複製檔案到 IIS 目錄
         run: |
-          $src = "C:\deploy\EquipmentBorrowingSystem\*"
-          $dst = "C:\inetpub\wwwroot\EquipmentBorrowingSystem"
-          Copy-Item -Path $src -Destination $dst -Recurse -Force
+          robocopy "C:\deploy\EquipmentBorrowingSystem" "C:\inetpub\wwwroot\EquipmentBorrowingSystem" /MIR /NFL /NDL /NJH /NJS
+          if ($LASTEXITCODE -ge 8) { throw "Robocopy failed: $LASTEXITCODE" }
         shell: powershell
 
       - name: 啟動 IIS 網站
         run: |
           Import-Module WebAdministration
+          Start-WebAppPool -Name "EquipmentBorrowingSystem"
           Start-WebSite -Name "EquipmentBorrowingSystem"
         shell: powershell
 
