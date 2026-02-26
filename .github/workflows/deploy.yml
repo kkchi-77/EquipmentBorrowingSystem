@@ -41,4 +41,4 @@ jobs:
         shell: powershell
 
       - name: 部署完成通知
-        run: echo "✅ 部署成功！"
+        run: echo "Deploy successful!"
