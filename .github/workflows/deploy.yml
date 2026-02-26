@@ -12,11 +12,6 @@ jobs:
       - name: Checkout 程式碼
         uses: actions/checkout@v4
 
-      - name: 設定 .NET 7
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '7.0.x'
-
       - name: Restore 套件
         run: dotnet restore EquipmentBorrowingSystem/EquipmentBorrowingSystem.csproj
 
