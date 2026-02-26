@@ -40,7 +40,7 @@ jobs:
       - name: 複製檔案到 IIS 目錄
         run: |
           robocopy "C:\deploy\EquipmentBorrowingSystem" "C:\inetpub\wwwroot\EquipmentBorrowingSystem" /MIR /NFL /NDL /NJH /NJS
-          if ($LASTEXITCODE -ge 8) { throw "Robocopy failed: $LASTEXITCODE" }
+          if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE } else { exit 0 }
         shell: powershell
 
       - name: 啟動 IIS 網站
