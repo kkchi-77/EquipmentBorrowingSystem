@@ -32,8 +32,8 @@ jobs:
           Get-Process -Name "w3wp" -ErrorAction SilentlyContinue | Stop-Process -Force
           Start-Sleep -Seconds 3
           Import-Module WebAdministration
-          Stop-WebAppPool -Name "EquipmentBorrowingSystem" -ErrorAction SilentlyContinue
-          Stop-WebSite -Name "EquipmentBorrowingSystem" -ErrorAction SilentlyContinue
+          try { Stop-WebAppPool -Name "EquipmentBorrowingSystem" } catch { Write-Host "AppPool already stopped." }
+          try { Stop-WebSite -Name "EquipmentBorrowingSystem" } catch { Write-Host "WebSite already stopped." }
           Start-Sleep -Seconds 3
         shell: powershell
 
