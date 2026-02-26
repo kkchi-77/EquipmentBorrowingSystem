@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - 數位內容設計研究中心｜設備借用管理</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/equipment-system.css" asp-append-version="true" />
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body>
+
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <nav class="sidebar" id="sidebar">
+        <!-- Brand -->
+        <a class="sidebar-brand" href="@Url.Action("ApplicationCompleted", "ApplicationCompleted")">
+            <span class="sidebar-brand-title">數位內容設計研究中心<br>器材設備借用</span>
+            <span class="sidebar-brand-badge"><i class="bi bi-shield-check"></i> 管理者</span>
+        </a>
+
+        <!-- Navigation -->
+        <div class="sidebar-nav">
+            <div class="sidebar-section-label">設備管理</div>
+
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ApplicationCompleted" ? "active" : "")"
+               href="@Url.Action("ApplicationCompleted", "ApplicationCompleted")">
+                <i class="bi bi-box-seam"></i>
+                查詢目前借用中設備
+            </a>
+
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "EquipmentReturn" && ViewContext.RouteData.Values["action"]?.ToString() == "Select_Equipment_BorrowingRecords" ? "active" : "")"
+               href="@Url.Action("Select_Equipment_BorrowingRecords", "EquipmentReturn")">
+                <i class="bi bi-clock-history"></i>
+                查詢借用紀錄
+            </a>
+
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Manage_All_Equipment" ? "active" : "")"
+               href="@Url.Action("Browse_All_equipment", "Manage_All_Equipment")">
+                <i class="bi bi-tools"></i>
+                管理所有設備
+            </a>
+
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Count_Borrowing_Times" ? "active" : "")"
+               href="@Url.Action("Count_Borrowing_Times", "Count_Borrowing_Times")">
+                <i class="bi bi-bar-chart-line"></i>
+                統計設備借用次數
+            </a>
+
+            <hr class="sidebar-divider" />
+
+            <div class="sidebar-section-label">其他</div>
+
+            <a class="nav-link" href="@Url.Action("Browse_equipment", "BorrowEquipment1")">
+                <i class="bi bi-person"></i>
+                返回使用者介面
+            </a>
+
+            <a class="nav-link" href="#" onclick="showAdminPasswordModal(event)">
+                <i class="bi bi-plus-circle"></i>
+                新增借用紀錄
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="sidebar-footer">
+            <a class="nav-link" href="@Url.Action("Logout", "Manager")">
+                <i class="bi bi-box-arrow-right"></i>
+                登出
+            </a>
+            <div class="mt-2" style="font-size: 0.72rem; color: #4a5057;">
+                <a href="https://www.ddc.tw/" style="color: #4a5057;">© 數位內容設計研究中心</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ==================== MAIN WRAPPER ==================== -->
+    <div class="main-wrapper" id="mainWrapper">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()" title="展開/收合選單">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h1 class="topbar-page-title">@(ViewData["Title"] ?? "管理後台")</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-user-info">
+                    <div class="topbar-user-avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <span class="d-none d-sm-inline">管理者</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="content-area">
+            @RenderBody()
+        </main>
+
+        <!-- Footer -->
+        <footer class="site-footer">
+            <a href="https://www.ddc.tw/">數位內容設計研究中心</a>
+        </footer>
+    </div>
+
+    <!-- ==================== Admin Password Modal ==================== -->
+    <div class="modal fade" id="adminPasswordModal" tabindex="-1" aria-labelledby="adminPasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content" style="border-radius: 12px; overflow: hidden;">
+                <div class="modal-body text-center pt-4 pb-3 px-4">
+                    <div class="mb-3" style="width:52px;height:52px;border-radius:50%;background:rgba(91,155,213,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:1.4rem;color:#5b9bd5;">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <h6 class="fw-bold mb-1" id="adminPasswordModalLabel">管理者驗證</h6>
+                    <p class="text-muted small mb-3">請輸入管理權限密碼以繼續</p>
+                    <div id="adminPasswordError" class="alert alert-danger py-2 small d-none mb-2">
+                        密碼輸入錯誤，請重新輸入
+                    </div>
+                    <input type="password" id="adminPasswordInput" class="form-control form-control-sm text-center mb-3"
+                           placeholder="請輸入密碼" autocomplete="off" />
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light btn-sm flex-fill" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-sm flex-fill text-white" style="background-color:#5b9bd5;"
+                                id="adminPasswordConfirmBtn" onclick="validateAdminPassword()">確認</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // ===== Sidebar Toggle =====
+        function toggleSidebar() {
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('sidebar-open');
+            overlay.classList.toggle('show');
+        }
+
+        function closeSidebar() {
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('sidebar-open');
+            overlay.classList.remove('show');
+        }
+
+        // ===== Admin Password Modal =====
+        function showAdminPasswordModal(event) {
+            event.preventDefault();
+            document.getElementById('adminPasswordInput').value = '';
+            document.getElementById('adminPasswordError').classList.add('d-none');
+            var modal = new bootstrap.Modal(document.getElementById('adminPasswordModal'));
+            modal.show();
+            setTimeout(function () {
+                document.getElementById('adminPasswordInput').focus();
+            }, 300);
+        }
+
+        // Enter key in password input
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('adminPasswordInput').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') validateAdminPassword();
+            });
+        });
+
+        function validateAdminPassword() {
+            var password = document.getElementById('adminPasswordInput').value;
+            var btn = document.getElementById('adminPasswordConfirmBtn');
+            var errorDiv = document.getElementById('adminPasswordError');
+
+            if (!password) {
+                errorDiv.textContent = '請輸入密碼';
+                errorDiv.classList.remove('d-none');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>驗證中';
+
+            fetch('@Url.Action("ValidateAdminPassword", "Manager")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ''
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('adminPasswordModal')).hide();
+                    window.location.href = '@Url.Action("Manage_CreateApplicationCompleted_Browse_equipment", "Manage_CreateApplicationCompleted")';
+                } else {
+                    errorDiv.textContent = '密碼輸入錯誤，請重新輸入';
+                    errorDiv.classList.remove('d-none');
+                    document.getElementById('adminPasswordInput').value = '';
+                    document.getElementById('adminPasswordInput').focus();
+                    btn.disabled = false;
+                    btn.innerHTML = '確認';
+                }
+            })
+            .catch(function () {
+                errorDiv.textContent = '驗證失敗，請稍後再試';
+                errorDiv.classList.remove('d-none');
+                btn.disabled = false;
+                btn.innerHTML = '確認';
+            });
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

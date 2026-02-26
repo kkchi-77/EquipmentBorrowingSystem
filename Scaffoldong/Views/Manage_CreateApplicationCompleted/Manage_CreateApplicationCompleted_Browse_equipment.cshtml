@@ -1,0 +1,474 @@
+﻿@model IEnumerable<Scaffoldong.Models.Equipment>
+@{
+    ViewData["Title"] = "管理人員新增設備借用";
+    Layout = "~/Views/Shared/_Layout_Manager_CreateApplicationCompleted.cshtml";
+    if (TempData["ExceedLimit"] != null && (bool)TempData["ExceedLimit"] == true)
+    {
+        <script>
+            alert("此設備已達新增數量上限");
+        </script>
+    }
+    if (TempData["Is_insert_consumables"] != null && (bool)TempData["Is_insert_consumables"] == true)
+    {
+        <script>
+            alert('您新增了\n設備名稱：@Html.Raw(TempData["EName"])\n設備型號：@Html.Raw(TempData["Emodel"])\n新增借用數量：@Html.Raw(TempData["EBorrowing_Quantity"])\n\n*如果您已新增完要借用的設備，請點選上方申請清單進行下個步驟')
+        </script>
+    }
+}
+<style>
+    .table-cell-centered {
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .table-cell-centered1 {
+        vertical-align: middle;
+    }
+
+    .showImageLink {
+        font-size: 15px;
+        color: blue; /* 改变超链接的颜色 */
+        text-decoration: none; /* 移除下划线 */
+        font-weight: bold; /* 加粗字体 */
+        font-family: Arial, sans-serif; /* 设置字体 */
+    }
+
+        .showImageLink:hover {
+            color: darkblue; /* 当鼠标悬停在链接上时改变颜色 */
+        }
+
+    .hideImageButton {
+        font-size: 15px;
+        color: blue; /* 改变超链接的颜色 */
+        text-decoration: none; /* 移除下划线 */
+        font-weight: bold; /* 加粗字体 */
+        font-family: Arial, sans-serif; /* 设置字体 */
+    }
+
+        .hideImageButton:hover {
+            color: darkblue; /* 当鼠标悬停在链接上时改变颜色 */
+        }
+
+    .equipmentImage {
+        max-width: 500px;
+        max-height: 500px;
+        border: 2px solid #ccc; /* 添加邊框 */
+        border-radius: 10px; /* 圓角 */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 陰影 */
+        transition: transform 0.3s ease; /* 添加平滑的變形效果 */
+    }
+
+        .equipmentImage:hover {
+            transform: scale(1.1); /* 滑鼠懸停時放大 */
+        }
+
+    tr.table-header {
+        border: 2px solid #333;
+    }
+
+    tr.table-header1 {
+        border: 1px solid #333;
+    }
+    /* 樣式化輸入欄位 */
+    input[type="text"], select {
+        padding: 8px; /* 調整內邊距 */
+        border: 1px solid #ccc; /* 添加邊框 */
+        border-radius: 4px; /* 圓角 */
+        box-sizing: border-box; /* 防止內容溢出 */
+        width: 200px; /* 指定寬度 */
+        font-size: 16px; /* 字體大小 */
+    }
+
+    /* 按鈕樣式 */
+    button[type="submit1"] {
+        padding: 8px 16px; /* 調整內邊距 */
+        border: none; /* 移除邊框 */
+        border-radius: 4px; /* 圓角 */
+        background-color: #4CAF50; /* 背景色 */
+        color: white; /* 文字顏色 */
+        cursor: pointer; /* 光標樣式 */
+        font-size: 16px; /* 字體大小 */
+    }
+
+    /* 按鈕悬停時的樣式 */
+    button[type="submit"]:hover {
+        background-color: #45a049; /* 悬停時背景色 */
+    }
+
+    /* 標題列樣式 */
+    .title-bar {
+        background-color: #90caf9; /* 標題列背景色 */
+        color: #424242; /* 文字顏色 */
+        padding: 10px; /* 內邊距 */
+        border-radius: 4px; /* 圓角 */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 陰影 */
+        margin-bottom: 20px; /* 底部外邊距 */
+    }
+
+    /* 将全屏图像容器的样式修改为flex布局 */
+    .fullScreenContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+    }
+
+    /* 将放大后的照片的样式修改为flex项 */
+    .fullScreenImage {
+        max-width: 70%; /* 将放大后照片的最大宽度设置为原始尺寸的150% */
+        max-height: 70%; /* 将放大后照片的最大高度设置为原始尺寸的150% */
+        margin: auto; /* 在全屏图像容器中水平和垂直居中 */
+    }
+
+    .equipmentImage:hover {
+        cursor: zoom-in; /* 当鼠标停留在照片上时，将鼠标样式改变为放大镜样式 */
+    }
+
+    .closeButton {
+        position: absolute;
+        top: 20px; /* 根据需要调整垂直位置 */
+        left: 50%; /* 将提示文字水平居中 */
+        transform: translateX(-50%);
+        font-size: 16px;
+        color: #fff; /* 设置提示文字颜色 */
+        background-color: rgba(0, 0, 0, 0.5); /* 设置提示文字背景颜色及透明度 */
+        padding: 5px 10px;
+        border-radius: 5px;
+        z-index: 999; /* 确保提示文字在最上层 */
+        margin-top: 75px; /* 调整顶部边距，使文字向下移动 */
+    }
+</style>
+
+
+<div class="title-bar">
+    <h3><strong>查詢設備</strong></h3>
+</div>
+
+<table style="border-collapse: collapse; width: 100%; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px;">
+    <tr>
+        <td style="border-right: 1px solid #ccc; padding: 20px; text-align: center;">
+            <h4 style="margin-bottom: 20px; font-weight: bold; color: #333;">輸入要查詢的設備名稱</h4>
+            <form action="@Url.Action("Manage_CreateApplicationCompleted_Browse_equipment1", "Manage_CreateApplicationCompleted")" method="post">
+                <input type="text" name="keyword" placeholder="請輸入關鍵字" required="required" autocomplete="off" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 10px;">
+                <button type="submit" name="searchButton" style="padding: 10px 20px; background-color: #45a049; color: #fff; border: none; border-radius: 4px; cursor: pointer;">查詢</button>
+            </form>
+        </td>
+        <td style="padding: 20px; text-align: center;">
+            <h4 style="margin-bottom: 20px; font-weight: bold; color: #333;">選取要查詢的器材或設備</h4>
+            <form action="@Url.Action("Manage_CreateApplicationCompleted_Browse_equipment1", "Manage_CreateApplicationCompleted")" method="post">
+                <select name="select" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 10px;">
+                    <option value="查詢全部">查詢全部</option>
+                    <option value="頭盔">頭盔</option>
+                    <option value="平板">平板</option>
+                    <option value="筆電">筆電</option>
+                    <option value="麥克風">麥克風</option>
+                    <option value="傳輸線">傳輸線</option>
+                    <option value="轉接線">轉接線</option>
+                    <option value="其他">其他</option>
+                </select>
+                <button type="submit" name="addButton" style="padding: 10px 20px; background-color: #45a049; color: #fff; border: none; border-radius: 4px; cursor: pointer;">查詢</button>
+            </form>
+        </td>
+    </tr>
+</table>
+<hr />
+
+<table class="table table-bordered table-striped " style="width: 100%;">
+    <thead>
+        <tr class="table-header">
+            <th style="width: 30%; font-weight: bold; font-size: 20px;" class="table-cell-centered1">@Html.DisplayNameFor(model => model.EName)</th>
+            <th style="width: 20%; font-weight: bold; font-size: 20px;" class="table-cell-centered1">@Html.DisplayNameFor(model => model.Emodel)</th>
+            <th style="width: 7%; font-weight: bold; font-size: 20px;" class="table-cell-centered">設備圖片</th>
+            @if (Html.DisplayNameFor(model => model.ERemaining_Quantity) == "剩餘數量")
+            {
+                <th style="width: 15%; font-weight: bold; font-size: 20px;" class="table-cell-centered">目前可借用數量</th>
+            }
+
+            <th style="width: 8%; font-weight: bold; font-size: 20px;" class="table-cell-centered">@Html.DisplayNameFor(model => model.ESource)</th>
+            <th style="width: 10%;"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            @if (item.Is_Consumable == "False")
+            {
+                <tr class="table-header1">
+
+                    @if (item.ERemaining_Quantity != "0")
+                    {
+                        <td style="width: 30%; font-size: 18px;" class=" table-cell-centered1">
+                            @Html.DisplayFor(modelItem => item.EName)
+
+
+                        </td>
+                        <td style="width: 20%; font-size: 18px;" class="table-cell-centered1">@Html.DisplayFor(modelItem => item.Emodel)</td>
+                        @if (@item.EImage != " ")
+                        {
+                            <td style="width: 12%; font-size: 18px;" class="table-cell-centered">
+                                <a href="#" class="showImageLink" style="font-size: 15px;">點選查看設備圖片<br>(部分照片為示意圖)</a>
+                                <div class="imageContainer" style="display: none;">
+                                    <img class="equipmentImage" src="~/Image/@item.EImage" asp-append-version="true" data-ename="@item.EName" data-emodel="@item.Emodel" />
+                                    <br><a href="#" class="hideImageButton" style="font-size: 15px;">收回圖片</a>
+                                </div>
+                            </td>
+                        }
+                        else
+                        {
+                            <td style="width: 12%; font-size: 18px;" class="table-cell-centered">
+                                目前無照片資料
+                            </td>
+                        }
+                        string uniqueId = "EQuantity_" + item.Id; // 假設 item 有唯一的 Id 屬性
+                        @if (item.Is_Consumable == "True")
+                        {
+
+                            <td style="width: 15%; font-size: 18px;" class="table-cell-centered">
+                                <input type="number" id="@uniqueId" name="EQuantity" value="1" required="required" autocomplete="off" style="width: 50px;" min="0" /> /
+                                @Html.DisplayFor(modelItem => item.ERemaining_Quantity) @Html.DisplayFor(modelItem => item.EQuantity_Unit)
+                            </td>
+                        }
+
+                        else
+                        {
+                            <td style="width: 15%; font-size: 18px;" class="table-cell-centered">@Html.DisplayFor(modelItem => item.ERemaining_Quantity) @Html.DisplayFor(modelItem => item.EQuantity_Unit)</td>
+                        }
+
+                        <td style="width: 7%; font-size: 18px; " class="table-cell-centered">@Html.DisplayFor(modelItem => item.ESource)</td>
+
+                        @if (item.Is_Consumable == "True")
+                        {
+                            <td style="width: 15%;" class="table-cell-centered">
+                                <form action="@Url.Action("Manage_CreateApplicationCompleted_AddEquipment", "Manage_CreateApplicationCompleted")" method="post" onsubmit="updateBorrowingQuantity(event, this, '@uniqueId')">
+                                    <input type="hidden" name="EName" value="@item.EName" /> <!-- 添加隐藏字段传递 item.EName 的值 -->
+                                    <input type="hidden" name="Emodel" value="@item.Emodel" />
+                                    <input type="hidden" name="ESource" value="@item.ESource" />
+                                    <input type="hidden" id="EBorrowing_Quantity" name="EBorrowing_Quantity" /> <!-- 隐藏字段 -->
+
+
+                                    <button type="submit" name="addButton" value="add">新增此設備</button>
+                                </form>
+                            </td>
+
+                        }
+                        else
+                        {
+                            <td style="width: 15%;" class="table-cell-centered">
+                                <form action="@Url.Action("Manage_CreateApplicationCompleted_Browse_Equipment_EId", "Manage_CreateApplicationCompleted")" method="post">
+                                    <input type="hidden" name="EName" value="@item.EName" /> <!-- 添加隐藏字段传递 item.EName 的值 -->
+                                    <input type="hidden" name="Emodel" value="@item.Emodel" /> <!-- 添加隐藏字段传递 item.Emodel 的值 -->
+                                    <input type="hidden" name="ESource" value="@item.ESource" /> <!-- 添加隐藏字段传递 item.ESource 的值 -->
+                                    <button type="submit" name="addButton" value="add">選擇此設備編號</button>
+                                </form>
+                            </td>
+                        }
+
+
+                    }
+
+
+
+
+                </tr>
+            }
+
+        }
+
+    </tbody>
+</table>
+<h3>消耗品</h3> <!-- 再次大標題 -->
+<hr></hr>
+<table class="table table-bordered table-striped " style="width: 100%;">
+    <thead>
+        <tr class="table-header">
+            <th style="width: 30%; font-weight: bold; font-size: 20px;" class="table-cell-centered1">消耗品</th>
+            <th style="width: 20%; font-weight: bold; font-size: 20px;" class="table-cell-centered1">@Html.DisplayNameFor(model => model.Emodel)</th>
+            <th style="width: 7%; font-weight: bold; font-size: 20px;" class="table-cell-centered">設備圖片</th>
+            @if (Html.DisplayNameFor(model => model.ERemaining_Quantity) == "剩餘數量")
+            {
+
+                <th style="width: 15%; font-weight: bold; font-size: 20px;" class="table-cell-centered">新增借用數量</th>
+            }
+
+            <th style="width: 8%; font-weight: bold; font-size: 20px;" class="table-cell-centered">@Html.DisplayNameFor(model => model.ESource)</th>
+            <th style="width: 10%;"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            @if (item.Is_Consumable == "True")
+            {
+                <tr class="table-header1">
+
+                    @if (item.ERemaining_Quantity != "0")
+                    {
+                        <td style="width: 30%; font-size: 18px;" class=" table-cell-centered1">
+                            @Html.DisplayFor(modelItem => item.EName)
+
+
+                        </td>
+                        <td style="width: 20%; font-size: 18px;" class="table-cell-centered1">@Html.DisplayFor(modelItem => item.Emodel)</td>
+                        @if (@item.EImage != " ")
+                        {
+                            <td style="width: 12%; font-size: 18px;" class="table-cell-centered">
+                                <a href="#" class="showImageLink" style="font-size: 15px;">點選查看設備圖片<br>(部分照片為示意圖)</a>
+                                <div class="imageContainer" style="display: none;">
+                                    <img class="equipmentImage" src="~/Image/@item.EImage" asp-append-version="true" data-ename="@item.EName" data-emodel="@item.Emodel" />
+                                    <br><a href="#" class="hideImageButton" style="font-size: 15px;">收回圖片</a>
+                                </div>
+                            </td>
+                        }
+                        else
+                        {
+                            <td style="width: 12%; font-size: 18px;" class="table-cell-centered">
+                                目前無照片資料
+                            </td>
+                        }
+                        string uniqueId = "EQuantity_" + item.Id; // 假設 item 有唯一的 Id 屬性
+                        @if (item.Is_Consumable == "True")
+                        {
+                            var max_borrowing = item.ERemaining_Quantity;
+                            <td style="width: 15%; font-size: 18px;" class="table-cell-centered">
+                                <input type="number" id="@uniqueId" name="EQuantity" value="1" required="required" max="@max_borrowing" autocomplete="off" style="width: 50px;" min="0" />/
+                                @Html.DisplayFor(modelItem => item.ERemaining_Quantity) @Html.DisplayFor(modelItem => item.EQuantity_Unit)
+                            </td>
+                        }
+
+                        else
+                        {
+                            <td style="width: 15%; font-size: 18px;" class="table-cell-centered">@Html.DisplayFor(modelItem => item.ERemaining_Quantity) @Html.DisplayFor(modelItem => item.EQuantity_Unit)</td>
+                        }
+
+                        <td style="width: 7%; font-size: 18px; " class="table-cell-centered">@Html.DisplayFor(modelItem => item.ESource)</td>
+
+                        @if (item.Is_Consumable == "True")
+                        {
+                            <td style="width: 15%;" class="table-cell-centered">
+                                <form action="@Url.Action("Manage_CreateApplicationCompleted_AddEquipment", "Manage_CreateApplicationCompleted")" method="post" onsubmit="updateBorrowingQuantity(event, this, '@uniqueId')">
+                                    <input type="hidden" name="EName" value="@item.EName" /> <!-- 添加隐藏字段传递 item.EName 的值 -->
+                                    <input type="hidden" name="Emodel" value="@item.Emodel" />
+                                    <input type="hidden" name="ESource" value="@item.ESource" />
+                                    <input type="hidden" name="Is_Consumable" value="@item.Is_Consumable" />
+                                    <input type="hidden" id="EBorrowing_Quantity" name="EBorrowing_Quantity" /> <!-- 隐藏字段 -->
+                                    <input type="hidden" name="ERemaining_Quantity" value="@item.ERemaining_Quantity" />
+                                    <button type="submit" name="addButton" value="add">新增此設備</button>
+                                </form>
+                            </td>
+
+                        }
+                        else
+                        {
+                            <td style="width: 15%;" class="table-cell-centered">
+                                <form action="@Url.Action("Manage_CreateApplicationCompleted_Browse_Equipment_EId", "Manage_CreateApplicationCompleted")" method="post">
+                                    <input type="hidden" name="EName" value="@item.EName" /> <!-- 添加隐藏字段传递 item.EName 的值 -->
+                                    <input type="hidden" name="Emodel" value="@item.Emodel" /> <!-- 添加隐藏字段传递 item.Emodel 的值 -->
+                                    <input type="hidden" name="ESource" value="@item.ESource" /> <!-- 添加隐藏字段传递 item.ESource 的值 -->
+                                    <button type="submit" name="addButton" value="add">選擇此設備編號</button>
+                                </form>
+                            </td>
+                        }
+
+
+                    }
+
+
+
+
+                </tr>
+            }
+
+        }
+    </tbody>
+</table>
+<script>
+    function updateBorrowingQuantity(event, form, uniqueId) {
+        event.preventDefault();
+        var quantity = document.getElementById(uniqueId).value;
+        form.querySelector('input[name="EBorrowing_Quantity"]').value = quantity;
+        form.submit();
+    }
+</script>
+<script>
+    // 点击显示图片
+    var showImageLinks = document.querySelectorAll('.showImageLink');
+    showImageLinks.forEach(function (link) {
+        link.addEventListener("click", function (event) {
+            event.preventDefault(); // 阻止默认行为，即不打开链接
+            var imageContainer = this.nextElementSibling; // 获取当前链接的下一个兄弟元素，即图像容器
+            imageContainer.style.display = "block"; // 显示图像容器
+        });
+    });
+
+    // 点击隐藏图片
+    var hideImageButtons = document.querySelectorAll('.hideImageButton');
+    hideImageButtons.forEach(function (button) {
+        button.addEventListener("click", function (event) {
+            event.preventDefault(); // 阻止默认行为
+            var imageContainer = this.parentNode; // 获取当前按钮的父元素，即图像容器
+            imageContainer.style.display = "none"; // 隐藏图像容器
+        });
+    });
+
+    // 點選照片本身放大至全網頁畫面
+    var equipmentImages = document.querySelectorAll('.equipmentImage');
+    equipmentImages.forEach(function (image) {
+        image.addEventListener("click", function (event) {
+            event.preventDefault(); // 阻止默认行为
+
+            // 创建全屏图像容器
+            var fullScreenContainer = document.createElement('div');
+            fullScreenContainer.classList.add('fullScreenContainer'); // 添加全屏容器的类
+
+            // 创建放大后的照片
+            var fullScreenImage = document.createElement('img');
+            fullScreenImage.classList.add('fullScreenImage'); // 添加放大后照片的类
+            fullScreenImage.src = this.src; // 设置放大后照片的src为被点击照片的src
+
+            // 获取 item.EName 和 item.Emodel 的值
+            var eName = this.getAttribute('data-ename');
+            var eModel = this.getAttribute('data-emodel');
+
+
+
+            // 创建提示文字
+            var closeButton = document.createElement('div');
+            closeButton.classList.add('closeButton'); // 添加提示文字的类
+            closeButton.textContent = eName + "：" + eModel; // 设置提示文字内容
+
+            // 将放大后的照片和提示文字添加到全屏图像容器中
+            fullScreenContainer.appendChild(fullScreenImage);
+            fullScreenContainer.appendChild(closeButton);
+
+            // 将全屏图像容器添加到body中
+            document.body.appendChild(fullScreenContainer);
+
+            // 点击全屏图像容器时，移除全屏图像容器
+            fullScreenContainer.addEventListener("click", function () {
+                document.body.removeChild(this); // 移除全屏图像容器
+            });
+        });
+    });
+
+
+</script>
+@* else
+                {
+                    <td style="width: 40%; font-size: 18px;">@Html.DisplayFor(modelItem => item.EName) (@Html.DisplayFor(modelItem => item.ESource))</td>
+                    <td style="width: 30%; font-size: 18px;">@Html.DisplayFor(modelItem => item.Emodel) (@Html.DisplayFor(modelItem => item.Emodel))</td>
+                    <td style="width: 15%; font-size: 18px;">@Html.DisplayFor(modelItem => item.ERemaining_Quantity) @Html.DisplayFor(modelItem => item.EQuantity_Unit)</td>
+                    <td style="width: 30%;">
+                        <form action="@Url.Action("AddEquipment_ERemaining_Quantity_1", "BorrowEquipment1")" method="post" onsubmit="return alert('您新增了\n設備名稱：@item.EName\n設備型號：@item.Emodel')">
+                            <input type="hidden" name="EName" value="@item.EName" />
+                            <input type="hidden" name="Emodel" value="@item.Emodel" /> <!-- 添加隐藏字段传递 item.Emodel 的值 -->
+                            <input type="hidden" name="ESource" value="@item.ESource" />
+                            <button type="submit" name="addButton" value="add">添加置申請清單</button>
+                        </form>
+                    </td>
+                } *@

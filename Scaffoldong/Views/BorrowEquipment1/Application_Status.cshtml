@@ -1,0 +1,108 @@
+@model IEnumerable<Scaffoldong.Models.Application>
+@{
+    ViewBag.Title = "查詢申請狀態";
+    Layout = "~/Views/Shared/_Layout_Member.cshtml";
+    DateTime targetDate = new DateTime(2000, 10, 10);
+    int itemcount = 0;
+}
+
+<div class="page-header">
+    <h4><i class="bi bi-list-check me-2" style="color:#5b9bd5;"></i>我的申請紀錄</h4>
+    <p class="page-subtitle">查看所有借用申請的審核狀態</p>
+</div>
+
+<div class="content-card">
+    <div class="content-card-header">
+        <h5><i class="bi bi-clipboard2-check"></i> 申請列表</h5>
+        <span class="badge" style="background:rgba(91,155,213,0.15);color:#2d6fa3;font-weight:600;">
+            共 @Model.Count(m => m.Status != "True") 筆
+        </span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover table-custom mb-0">
+            <thead>
+                <tr>
+                    <th style="width:4%">#</th>
+                    <th style="width:22%">申請 / 借用 / 歸還 日期</th>
+                    <th style="width:9%">借用人</th>
+                    <th style="width:18%">聯絡方式</th>
+                    <th style="width:20%">用途說明</th>
+                    <th style="width:10%">審核狀態</th>
+                    <th style="width:17%">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>目前尚無任何申請紀錄
+                        </td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    itemcount++;
+                    @if (item.Status != "True")
+                    {
+                        <tr>
+                            <td class="text-center text-muted">@itemcount</td>
+                            <td>
+                                @if (item.Date_Of_Application == targetDate)
+                                {
+                                    <span class="badge bg-secondary mb-1">管理者申請</span><br />
+                                }
+                                else
+                                {
+                                    <small class="text-muted">(申) @item.Date_Of_Application.ToString("yyyy/MM/dd")</small><br />
+                                }
+                                <small style="color:#1a7a33;"><i class="bi bi-box-arrow-up-right"></i> @item.Borrow_Time.ToString("yyyy/MM/dd HH:mm")</small><br />
+                                <small style="color:#c0392b;"><i class="bi bi-box-arrow-in-down-left"></i> @item.Return_Time.ToString("yyyy/MM/dd HH:mm")</small>
+                            </td>
+                            <td class="fw-semibold">@item.Name</td>
+                            <td>
+                                <small><i class="bi bi-telephone me-1"></i>@item.Mobile</small><br />
+                                <small class="text-muted"><i class="bi bi-envelope me-1"></i>@item.fEmail</small>
+                            </td>
+                            <td><small>@item.Illustrate</small></td>
+                            <td class="text-center">
+                                @if (item.Status == "Applying")
+                                {
+                                    <span class="status-badge badge-applying">
+                                        <i class="bi bi-hourglass-split"></i> 審核中
+                                    </span>
+                                }
+                                else if (item.Status == "True")
+                                {
+                                    <span class="status-badge badge-approved">
+                                        <i class="bi bi-check-circle-fill"></i> 已通過
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    <form action="@Url.Action("Select_Application_List", "BorrowEquipment1")" method="post">
+                                        <input type="hidden" name="fOrderGuid" value="@item.fOrderGuid" />
+                                        <button type="submit" class="btn btn-outline-primary btn-sm w-100" style="font-size:.78rem;">
+                                            <i class="bi bi-list-ul me-1"></i>詳細資訊
+                                        </button>
+                                    </form>
+                                    @if (item.Status == "Applying")
+                                    {
+                                        <form action="@Url.Action("Delete_Application_Status", "BorrowEquipment1")" method="post">
+                                            <input type="hidden" name="fOrderGuid" value="@item.fOrderGuid" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm w-100"
+                                                    onclick="return confirm('確定要取消此筆申請嗎？')" style="font-size:.78rem;">
+                                                <i class="bi bi-x-circle me-1"></i>取消申請
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

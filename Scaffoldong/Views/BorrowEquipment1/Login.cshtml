@@ -1,0 +1,62 @@
+@{
+    ViewBag.Title = "會員登入";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="login-card">
+    <div class="login-logo">
+        <i class="bi bi-person-fill"></i>
+    </div>
+    <h5 class="text-center fw-bold mb-1">數位內容設計研究中心</h5>
+    <p class="text-center text-muted small mb-4">器材設備借用系統</p>
+
+    @if (ViewBag.Message != null)
+    {
+        <div class="alert alert-danger py-2 small mb-3">
+            <i class="bi bi-exclamation-circle me-1"></i>@ViewBag.Message
+        </div>
+    }
+
+    <form action="@Url.Action("Login")" method="post" autocomplete="off">
+        <div class="mb-3">
+            <label for="fUserId" class="form-label fw-semibold small">帳號</label>
+            <div class="input-group">
+                <span class="input-group-text" style="background:#f8f9fa;border-right:0;">
+                    <i class="bi bi-person text-muted"></i>
+                </span>
+                <input type="text" id="fUserId" name="fUserId" required
+                       class="form-control border-start-0" placeholder="請輸入帳號" />
+            </div>
+        </div>
+        <div class="mb-4">
+            <label for="fPwd" class="form-label fw-semibold small">密碼</label>
+            <div class="input-group">
+                <span class="input-group-text" style="background:#f8f9fa;border-right:0;">
+                    <i class="bi bi-lock text-muted"></i>
+                </span>
+                <input type="password" id="fPwd" name="fPwd" required
+                       class="form-control border-start-0" placeholder="請輸入密碼" />
+            </div>
+        </div>
+        <button type="submit" class="btn w-100 text-white fw-semibold"
+                style="background-color:#5b9bd5;border-color:#5b9bd5;padding:.6rem;">
+            <i class="bi bi-box-arrow-in-right me-1"></i>登入
+        </button>
+    </form>
+
+    <hr class="my-3" />
+    <div class="text-center">
+        <span class="text-muted small">還沒有帳號？</span>
+        <a href="@Url.Action("Register", "BorrowEquipment1")" class="small fw-semibold ms-1"
+           style="color:#5b9bd5;">立即註冊</a>
+    </div>
+    <div class="text-center mt-2">
+        <a href="@Url.Action("Login", "Manager")" class="text-muted small">
+            <i class="bi bi-shield me-1"></i>管理者登入
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
