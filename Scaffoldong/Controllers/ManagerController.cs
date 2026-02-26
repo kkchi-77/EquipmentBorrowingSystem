@@ -18,17 +18,9 @@ namespace Scaffoldong.Controllers
             _configuration = configuration;
         }
 
-        // GET: Employees
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            // 判斷是否為登入狀態
-            if (SharedData.WelcomeMessage == null)
-            {
-                return RedirectToAction("Login", "Manager");
-            }
-            return _context.BorrowEquipment1 != null ?
-                          View(await _context.BorrowEquipment1.ToListAsync()) :
-                          Problem("Entity set 'EmployeeContext.BorrowEquipment1'  is null.");
+            return RedirectToAction("ApplicationCompleted", "ApplicationCompleted");
         }
 
         public IActionResult Login()

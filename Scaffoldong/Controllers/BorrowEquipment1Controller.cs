@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -25,24 +25,6 @@ namespace Scaffoldong.Controllers
         public BorrowEquipment1Controller(EmployeeContext context)
         {
             _context = context;
-        }
-        public async Task<IActionResult> Index()
-        {
-
-            // 判斷是否為登入狀態
-            //if (SharedData.WelcomeMessage == null)
-            //{
-            //    return RedirectToAction("Login", "BorrowEquipment1");
-            //}
-            return _context.BorrowEquipment1 != null ?
-                          View(await _context.BorrowEquipment1.ToListAsync()) :
-                          Problem("Entity set 'EmployeeContext.BorrowEquipment1'  is null.");
-
-
-
-
-
-
         }
         //瀏覽可借用器材//瀏覽可借用器材//瀏覽可借用器材
         public async Task<IActionResult> Browse_equipment()
@@ -601,28 +583,6 @@ namespace Scaffoldong.Controllers
 
 
 
-        public IActionResult Create()
-        {
-            // 判斷是否為登入狀態// 判斷是否為登入狀態// 判斷是否為登入狀態
-            //if (SharedData.WelcomeMessage == null)
-            //{
-            //    return RedirectToAction("Login", "BorrowEquipment1");
-            //}
-            return View();
-        }
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Equipment,Borrow_Time,Return_Time,Mobile,Illustrate,Status")] BorrowEquipment1 borrowequipment1)
-        {
-            if (ModelState.IsValid)
-            {
-
-                _context.Add(borrowequipment1);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(borrowequipment1);
-        }
 
         public IActionResult Register()
         {
@@ -746,61 +706,6 @@ namespace Scaffoldong.Controllers
         }
 
 
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null || _context.BorrowEquipment1 == null)
-            {
-                return NotFound();
-            }
-
-            var borrowEquipment = await _context.BorrowEquipment1
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (borrowEquipment == null)
-            {
-                return NotFound();
-            }
-
-            return View(borrowEquipment);
-        }
-
-        //刪除已申請的列表//刪除已申請的列表//刪除已申請的列表
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            if (_context.BorrowEquipment1 == null)
-            {
-                return Problem("Entity set 'EmployeeContext.Employee'  is null.");
-            }
-            else if (_context.Application_Details == null)
-            {
-                return Problem("Entity set 'EmployeeContext.Application_Details'  is null.");
-            }
-            else
-            {
-                if (await _context.BorrowEquipment1.FindAsync(id) != null)
-                {
-                    var borrowEquipment = await _context.BorrowEquipment1.FindAsync(id);
-                    _context.BorrowEquipment1.Remove(borrowEquipment);
-                }
-
-
-                if (await _context.Application_Details.FindAsync(id) != null)
-                {
-                    var application_details = await _context.Application_Details.FindAsync(id);
-                    _context.Application_Details.Remove(application_details);
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction(nameof(Application_List));
-                }
-            }
-
-
-
-
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
 
 
         //刪除申請列表以及列表內的詳細資料 //刪除申請列表以及列表內的詳細資料 //刪除申請列表以及列表內的詳細資料
@@ -863,22 +768,6 @@ namespace Scaffoldong.Controllers
 
 
         //接受此申請，接受人必須填入個人的姓名 [代表為設備移交人(借出)]
-        public ActionResult Accept_application(string fOrderGuid)
-        {
-
-            var select_application = _context.Application
-                .Where(m => m.fOrderGuid == fOrderGuid).ToList();
-
-            var application = new Models.Application();
-            application.fOrderGuid = select_application.FirstOrDefault().fOrderGuid;
-            application.Name = select_application.FirstOrDefault().Name;
-            application.Borrow_Time = select_application.FirstOrDefault().Borrow_Time;
-            application.Return_Time = select_application.FirstOrDefault().Return_Time;
-            application.Mobile = select_application.FirstOrDefault().Mobile;
-            application.fEmail = select_application.FirstOrDefault().fEmail;
-            application.Illustrate = select_application.FirstOrDefault().Illustrate;
-            return View(application);
-        }
 
         //修改申請清單，消耗品的數量
         [HttpPost]

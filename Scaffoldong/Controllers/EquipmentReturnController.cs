@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Scaffoldong.Data;
 using Scaffoldong.EMail;
 using Scaffoldong.Migrations;
@@ -16,7 +16,7 @@ namespace Scaffoldong.Controllers
 
 
         //按下設備歸還，設備接收人必須填入個人的姓名 [代表為設備歸還的接收人(歸還)]
-        public ActionResult Equipment_Recive_Person(string fOrderGuid)
+        public ActionResult Equipment_Receive_Person(string fOrderGuid)
         {
             //查詢此筆申請通過的借用紀錄
             var Application_Completed = _context.Application_Completed
