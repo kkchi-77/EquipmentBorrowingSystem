@@ -16,10 +16,10 @@ jobs:
         run: dotnet restore EquipmentBorrowingSystem/EquipmentBorrowingSystem.csproj
 
       - name: 發布專案
-        run: >
-          dotnet publish EquipmentBorrowingSystem/EquipmentBorrowingSystem.csproj
-          -c Release
-          -o C:\deploy\EquipmentBorrowingSystem
+        run: |
+          if (Test-Path "C:\deploy\EquipmentBorrowingSystem") { Remove-Item "C:\deploy\EquipmentBorrowingSystem" -Recurse -Force }
+          dotnet publish EquipmentBorrowingSystem/EquipmentBorrowingSystem.csproj -c Release -o C:\deploy\EquipmentBorrowingSystem
+        shell: powershell
 
       - name: 停止 IIS 網站
         run: |
