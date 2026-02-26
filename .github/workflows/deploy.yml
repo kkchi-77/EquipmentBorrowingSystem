@@ -17,7 +17,8 @@ jobs:
 
       - name: 發布專案
         run: |
-          dotnet clean EquipmentBorrowingSystem/EquipmentBorrowingSystem.csproj -c Release
+          if (Test-Path "EquipmentBorrowingSystem\obj") { Remove-Item "EquipmentBorrowingSystem\obj" -Recurse -Force }
+          if (Test-Path "EquipmentBorrowingSystem\bin") { Remove-Item "EquipmentBorrowingSystem\bin" -Recurse -Force }
           if (Test-Path "C:\deploy\EquipmentBorrowingSystem") { Remove-Item "C:\deploy\EquipmentBorrowingSystem" -Recurse -Force }
           dotnet publish EquipmentBorrowingSystem/EquipmentBorrowingSystem.csproj -c Release -o C:\deploy\EquipmentBorrowingSystem
         shell: powershell
