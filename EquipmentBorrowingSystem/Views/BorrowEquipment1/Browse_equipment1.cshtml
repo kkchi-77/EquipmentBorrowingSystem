@@ -1,0 +1,448 @@
+@model EquipmentBorrowingSystem.ViewModel.Browse_equipment1ViewModel
+@{
+    ViewData["Title"] = "搜尋設備結果";
+    Layout = "~/Views/Shared/_Layout_Member.cshtml";
+
+    var normalEquipment   = Model.Equipment.Where(e => e.Is_Consumable == "False").ToList();
+    var consumables       = Model.Equipment.Where(e => e.Is_Consumable == "True").ToList();
+    var availableNormal   = normalEquipment.Where(e => e.ERemaining_Quantity != "0").ToList();
+    var unavailableNormal = normalEquipment.Where(e => e.ERemaining_Quantity == "0").ToList();
+    var totalAvailable    = availableNormal.Count + consumables.Count(e => e.ERemaining_Quantity != "0");
+
+    string searchLabel = Model.keyword != null
+        ? $"關鍵字：「{Model.keyword}」"
+        : $"類別：「{Model.select}」";
+}
+
+@* ===== Toast 通知 ===== *@
+@if (TempData["Is_insert_consumables"] != null && (bool)TempData["Is_insert_consumables"] == true)
+{
+    <div class="position-fixed top-0 end-0 p-3" style="z-index:9999">
+        <div id="addToast" class="toast align-items-center text-bg-success border-0 show" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    已加入：<strong>@TempData["EName"]</strong> @TempData["Emodel"]（x@TempData["EBorrowing_Quantity"]）
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+}
+@if (TempData["ExceedLimit"] != null && (bool)TempData["ExceedLimit"] == true)
+{
+    <div class="position-fixed top-0 end-0 p-3" style="z-index:9999">
+        <div id="limitToast" class="toast align-items-center text-bg-warning border-0 show" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>此設備已達新增數量上限
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ===== Page Header ===== *@
+<div class="page-header">
+    <div>
+        <h4><i class="bi bi-search me-2" style="color:#5b9bd5;"></i>搜尋結果</h4>
+        <p class="page-subtitle">@searchLabel，共找到 <strong>@totalAvailable</strong> 件可借用設備</p>
+    </div>
+    <a href="@Url.Action("Browse_equipment", "BorrowEquipment1")" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>返回全部設備
+    </a>
+</div>
+
+@* ===== Search Box ===== *@
+<div class="search-box mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-5">
+            <label class="form-label fw-semibold small mb-1">關鍵字搜尋</label>
+            <form action="@Url.Action("Browse_equipment1", "BorrowEquipment1")" method="post">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="keyword" placeholder="輸入設備名稱或型號"
+                           class="form-control" value="@Model.keyword" autocomplete="off" />
+                    <button type="submit" class="btn btn-accent">查詢</button>
+                </div>
+            </form>
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label fw-semibold small mb-1">依類別篩選</label>
+            <form action="@Url.Action("Browse_equipment1", "BorrowEquipment1")" method="post">
+                <div class="input-group input-group-sm">
+                    <select name="select" class="form-select">
+                        @{
+                            var optVals  = new[] { "查詢全部", "頭盔", "平板", "筆電", "麥克風", "傳輸線", "轉接線", "其他" };
+                            var optTexts = new[] { "全部設備", "頭盔", "平板", "筆電", "麥克風", "傳輸線", "轉接線", "其他" };
+                            for (int oi = 0; oi < optVals.Length; oi++)
+                            {
+                                if (Model.select == optVals[oi])
+                                {
+                                    <option value="@optVals[oi]" selected>@optTexts[oi]</option>
+                                }
+                                else
+                                {
+                                    <option value="@optVals[oi]">@optTexts[oi]</option>
+                                }
+                            }
+                        }
+                    </select>
+                    <button type="submit" class="btn btn-accent">篩選</button>
+                </div>
+            </form>
+        </div>
+        <div class="col-12 col-md-auto">
+            <a href="@Url.Action("Application_List", "BorrowEquipment1")"
+               class="btn btn-sm btn-outline-secondary w-100">
+                <i class="bi bi-cart3 me-1"></i>查看申請清單
+            </a>
+        </div>
+    </div>
+</div>
+
+@* ===== 沒有任何結果 ===== *@
+@if (!Model.Equipment.Any())
+{
+    <div class="content-card">
+        <div class="content-card-body text-center py-5 text-muted">
+            <i class="bi bi-search fs-1 d-block mb-3 opacity-50"></i>
+            <h5 class="fw-semibold mb-1">找不到符合的設備</h5>
+            <p class="small mb-3">請嘗試其他關鍵字或類別</p>
+            <a href="@Url.Action("Browse_equipment", "BorrowEquipment1")" class="btn btn-accent btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>返回全部設備
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    @* ===== 一般設備 ===== *@
+    @if (normalEquipment.Any())
+    {
+        <div class="content-card mb-4">
+            <div class="content-card-header">
+                <h5><i class="bi bi-box-seam"></i> 一般設備</h5>
+                <span class="badge" style="background:rgba(40,167,69,0.12);color:#1a7a33;font-weight:600;">
+                    @availableNormal.Count() 件可借用
+                </span>
+            </div>
+            <div class="content-card-body">
+                @if (!availableNormal.Any())
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox fs-3 d-block mb-1"></i>此條件下的一般設備目前已全部借出
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-3">
+                        @foreach (var item in availableNormal)
+                        {
+                            <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                                <div class="card h-100 border-0 shadow-sm" style="border-radius:10px;overflow:hidden;">
+                                    <div class="equipment-img-wrapper bg-light d-flex align-items-center justify-content-center"
+                                         style="height:140px;cursor:@(item.EImage != " " ? "zoom-in" : "default");"
+                                         @(item.EImage != " " ? $"onclick=\"openImgModal('{item.EImage}', '{item.EName}', '{item.Emodel}')\"" : "")>
+                                        @if (item.EImage != " ")
+                                        {
+                                            <img src="~/Image/@item.EImage" asp-append-version="true"
+                                                 alt="@item.EName" class="img-fluid" style="max-height:130px;object-fit:contain;" />
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-image text-muted" style="font-size:2.5rem;"></i>
+                                        }
+                                    </div>
+                                    <div class="card-body p-3">
+                                        <h6 class="fw-bold mb-1" style="font-size:.9rem;">@item.EName</h6>
+                                        <p class="text-muted small mb-2">@item.Emodel</p>
+                                        <div class="d-flex gap-1 flex-wrap mb-2">
+                                            <span class="badge rounded-pill"
+                                                  style="background:rgba(91,155,213,0.12);color:#2d6fa3;font-size:.72rem;">
+                                                <i class="bi bi-building me-1"></i>@item.ESource
+                                            </span>
+                                            <span class="badge rounded-pill"
+                                                  style="background:rgba(40,167,69,0.12);color:#1a7a33;font-size:.72rem;">
+                                                <i class="bi bi-check-circle me-1"></i>可借 @item.ERemaining_Quantity @item.EQuantity_Unit
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-white border-top-0 p-3 pt-0">
+                                        <button type="button" class="btn btn-accent btn-sm w-100"
+                                                onclick="openEIdModal('@Html.Raw(item.EName)', '@Html.Raw(item.Emodel)', '@Html.Raw(item.ESource)', '@Model.keyword', '@Model.select')">
+                                            <i class="bi bi-list-ol me-1"></i>選擇編號借用
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (unavailableNormal.Any())
+                {
+                    <hr class="my-3" />
+                    <p class="small text-muted mb-2"><i class="bi bi-slash-circle me-1"></i>以下設備目前已全部借出</p>
+                    <div class="row g-2">
+                        @foreach (var item in unavailableNormal)
+                        {
+                            <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                                <div class="card h-100 border-0 bg-light" style="border-radius:10px;opacity:.6;">
+                                    <div class="card-body p-3">
+                                        <h6 class="fw-bold mb-1 text-muted" style="font-size:.88rem;">@item.EName</h6>
+                                        <p class="text-muted small mb-1">@item.Emodel</p>
+                                        <span class="badge rounded-pill bg-secondary-subtle text-secondary" style="font-size:.72rem;">
+                                            <i class="bi bi-x-circle me-1"></i>已全部借出
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @* ===== 消耗品 ===== *@
+    @if (consumables.Any())
+    {
+        <div class="content-card">
+            <div class="content-card-header">
+                <h5><i class="bi bi-stack"></i> 消耗品</h5>
+                <span class="badge" style="background:rgba(230,168,0,0.12);color:#997400;font-weight:600;">
+                    @consumables.Count(e => e.ERemaining_Quantity != "0") 種可借用
+                </span>
+            </div>
+            <div class="content-card-body">
+                <div class="row g-3">
+                    @foreach (var item in consumables)
+                    {
+                        string uniqueId = "consumable_qty_" + item.Id;
+                        bool soldOut = (item.ERemaining_Quantity != "∞" && item.ERemaining_Quantity == "0");
+                        <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                            <div class="card h-100 border-0 shadow-sm @(soldOut ? "opacity-50" : "")" style="border-radius:10px;overflow:hidden;">
+                                <div class="equipment-img-wrapper bg-light d-flex align-items-center justify-content-center"
+                                     style="height:120px;cursor:@(item.EImage != " " ? "zoom-in" : "default");"
+                                     @(item.EImage != " " ? $"onclick=\"openImgModal('{item.EImage}', '{item.EName}', '{item.Emodel}')\"" : "")>
+                                    @if (item.EImage != " ")
+                                    {
+                                        <img src="~/Image/@item.EImage" asp-append-version="true"
+                                             alt="@item.EName" class="img-fluid" style="max-height:110px;object-fit:contain;" />
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-stack text-muted" style="font-size:2rem;"></i>
+                                    }
+                                </div>
+                                <div class="card-body p-3">
+                                    <h6 class="fw-bold mb-1" style="font-size:.9rem;">@item.EName</h6>
+                                    <p class="text-muted small mb-2">@item.Emodel</p>
+                                    <div class="d-flex gap-1 flex-wrap mb-2">
+                                        <span class="badge rounded-pill" style="background:rgba(91,155,213,0.12);color:#2d6fa3;font-size:.72rem;">
+                                            <i class="bi bi-building me-1"></i>@item.ESource
+                                        </span>
+                                        @if (soldOut)
+                                        {
+                                            <span class="badge rounded-pill bg-secondary-subtle text-secondary" style="font-size:.72rem;">已用完</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge rounded-pill" style="background:rgba(230,168,0,0.12);color:#997400;font-size:.72rem;">
+                                                庫存 @item.ERemaining_Quantity @item.EQuantity_Unit
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                                @if (!soldOut)
+                                {
+                                    <div class="card-footer bg-white border-top-0 p-3 pt-0">
+                                        <form action="@Url.Action("AddEquipment", "BorrowEquipment1")" method="post"
+                                              onsubmit="updateConsumableQty(event, this, '@uniqueId')">
+                                            <input type="hidden" name="EName" value="@item.EName" />
+                                            <input type="hidden" name="Emodel" value="@item.Emodel" />
+                                            <input type="hidden" name="ESource" value="@item.ESource" />
+                                            <input type="hidden" name="Is_Consumable" value="@item.Is_Consumable" />
+                                            <input type="hidden" name="ERemaining_Quantity" value="@item.ERemaining_Quantity" />
+                                            <input type="hidden" name="keyword" value="@Model.keyword" />
+                                            <input type="hidden" name="select" value="@Model.select" />
+                                            <input type="hidden" id="@(uniqueId + "_hidden")" name="EBorrowing_Quantity" />
+                                            <div class="input-group input-group-sm mb-2">
+                                                <button type="button" class="btn btn-outline-secondary"
+                                                        onclick="adjustQty('@uniqueId', -1, '@item.ERemaining_Quantity')">
+                                                    <i class="bi bi-dash"></i>
+                                                </button>
+                                                <input type="number" id="@uniqueId" value="1" min="1"
+                                                       max="@(item.ERemaining_Quantity == "∞" ? "" : item.ERemaining_Quantity)"
+                                                       class="form-control text-center" style="max-width:60px;" readonly />
+                                                <button type="button" class="btn btn-outline-secondary"
+                                                        onclick="adjustQty('@uniqueId', 1, '@item.ERemaining_Quantity')">
+                                                    <i class="bi bi-plus"></i>
+                                                </button>
+                                            </div>
+                                            <button type="submit" class="btn btn-sm w-100"
+                                                    style="background:rgba(230,168,0,0.15);color:#7a5e00;border:1px solid rgba(230,168,0,0.3);">
+                                                <i class="bi bi-plus-circle me-1"></i>加入申請清單
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@* ===== 選擇設備編號 Modal ===== *@
+<div class="modal fade" id="eIdModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content" style="border-radius:12px;overflow:hidden;">
+            <div class="modal-header" style="background:#f8f9fa;border-bottom:1px solid #e9ecef;">
+                <div>
+                    <h6 class="modal-title fw-bold mb-0" id="eIdModalTitle"></h6>
+                    <small id="eIdModalSubtitle" class="text-muted"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="eIdModalBody" style="min-height:80px;">
+            </div>
+            <div class="modal-footer" style="background:#f8f9fa;border-top:1px solid #e9ecef;">
+                <small class="text-muted me-auto"><i class="bi bi-info-circle me-1"></i>可選多個編號加入申請清單</small>
+                <a href="@Url.Action("Application_List", "BorrowEquipment1")" class="btn btn-sm btn-accent">
+                    <i class="bi bi-cart3 me-1"></i>前往申請清單
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ===== 圖片放大 Modal ===== *@
+<div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="background:transparent;border:0;">
+            <div class="modal-body text-center p-2">
+                <img id="imgModalSrc" src="" alt="" class="img-fluid rounded" style="max-height:80vh;" />
+                <p id="imgModalCaption" class="text-white mt-2 small"></p>
+                <button type="button" class="btn btn-light btn-sm mt-1" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i>關閉
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // ===== EId 選擇 Modal =====
+    var _eIdCtx = {};
+
+    function openEIdModal(eName, eModel, eSource, keyword, sel) {
+        _eIdCtx = { eName: eName, eModel: eModel, eSource: eSource, keyword: keyword, sel: sel };
+        document.getElementById('eIdModalTitle').textContent = eName;
+        document.getElementById('eIdModalSubtitle').textContent = eModel + (eSource ? '  |  ' + eSource : '');
+        document.getElementById('eIdModalBody').innerHTML =
+            '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div><span class="ms-2 text-muted small">載入中...</span></div>';
+        new bootstrap.Modal(document.getElementById('eIdModal')).show();
+
+        var fd = new FormData();
+        fd.append('EName', eName); fd.append('Emodel', eModel); fd.append('ESource', eSource);
+        fetch('@Url.Action("GetEquipmentEIds", "BorrowEquipment1")', { method: 'POST', body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (eIds) { renderEIds(eIds); })
+            .catch(function () {
+                document.getElementById('eIdModalBody').innerHTML =
+                    '<div class="text-center text-danger py-3"><i class="bi bi-exclamation-circle me-1"></i>載入失敗，請重試</div>';
+            });
+    }
+
+    function renderEIds(eIds) {
+        if (!eIds || eIds.length === 0) {
+            document.getElementById('eIdModalBody').innerHTML =
+                '<div class="text-center text-muted py-4"><i class="bi bi-inbox d-block mb-1 fs-3"></i>目前無可選設備編號</div>';
+            return;
+        }
+        var html = '<div class="row g-2 p-1">';
+        eIds.forEach(function (item) {
+            html += '<div class="col-6" id="eid-wrap-' + item.eId + '">' +
+                '<button type="button" class="btn btn-outline-primary btn-sm w-100 py-2" onclick="addEIdAjax(\'' + item.eId + '\')">' +
+                '<i class="bi bi-plus-circle me-1"></i>' + item.eId + '</button></div>';
+        });
+        html += '</div>';
+        document.getElementById('eIdModalBody').innerHTML = html;
+    }
+
+    function addEIdAjax(eId) {
+        var wrap = document.getElementById('eid-wrap-' + eId);
+        var btn = wrap ? wrap.querySelector('button') : null;
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>加入中'; }
+
+        var fd = new FormData();
+        fd.append('EName', _eIdCtx.eName);
+        fd.append('Emodel', _eIdCtx.eModel);
+        fd.append('EId', eId);
+        fd.append('ESource', _eIdCtx.eSource);
+        if (_eIdCtx.keyword) fd.append('keyword', _eIdCtx.keyword);
+        if (_eIdCtx.sel) fd.append('select', _eIdCtx.sel);
+
+        fetch('@Url.Action("AddEquipment", "BorrowEquipment1")', { method: 'POST', body: fd })
+            .then(function (r) {
+                if (r.ok && wrap) {
+                    wrap.innerHTML = '<div class="btn btn-sm w-100 py-2 text-success" style="border:1px solid #c3e6cb;background:#d4edda;cursor:default;">' +
+                        '<i class="bi bi-check-circle-fill me-1"></i>' + eId + '</div>';
+                    showEIdToast(_eIdCtx.eName, eId);
+                }
+            })
+            .catch(function () { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>' + eId; } });
+    }
+
+    function showEIdToast(eName, eId) {
+        var el = document.createElement('div');
+        el.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:99999;';
+        el.innerHTML = '<div class="toast align-items-center text-bg-success border-0 show"><div class="d-flex">' +
+            '<div class="toast-body"><i class="bi bi-check-circle-fill me-2"></i>已加入 <strong>' + eName + '</strong> 編號 ' + eId + '</div>' +
+            '<button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.closest(\'div[style]\').remove()"></button>' +
+            '</div></div>';
+        document.body.appendChild(el);
+        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 3500);
+    }
+
+    function adjustQty(id, delta, maxStr) {
+        var input = document.getElementById(id);
+        var val = parseInt(input.value) + delta;
+        var min = 1;
+        val = Math.max(min, val);
+        if (maxStr !== "∞" && maxStr !== "") {
+            val = Math.min(parseInt(maxStr), val);
+        }
+        input.value = val;
+    }
+
+    function updateConsumableQty(event, form, uniqueId) {
+        event.preventDefault();
+        var qty = document.getElementById(uniqueId).value;
+        form.querySelector('input[name="EBorrowing_Quantity"]').value = qty;
+        form.submit();
+    }
+
+    function openImgModal(imgFile, ename, emodel) {
+        document.getElementById('imgModalSrc').src = '/Image/' + imgFile;
+        document.getElementById('imgModalCaption').textContent = ename + ' — ' + emodel;
+        new bootstrap.Modal(document.getElementById('imgModal')).show();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        ['addToast', 'limitToast'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) setTimeout(function () {
+                var t = bootstrap.Toast.getOrCreateInstance(el);
+                t.hide();
+            }, 3500);
+        });
+    });
+</script>
+}

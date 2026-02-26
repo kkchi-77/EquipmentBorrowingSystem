@@ -1,0 +1,202 @@
+@model EquipmentBorrowingSystem.ViewModel.Count_Borrowing_Times_selectdateViewModel
+@{
+    ViewBag.Title = "統計借用次數";
+    Layout = "~/Views/Shared/_Layout_Manager.cshtml";
+    var Count_Borrowing_Times = 1;
+
+}
+<style>
+    .table {
+        width: 70%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+        .table th {
+            border: 2px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .table td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: #f2f2f2;
+        }
+
+    /* 樣式化輸入欄位 */
+    input[type="text"], select {
+        padding: 8px; /* 調整內邊距 */
+        border: 1px solid #ccc; /* 添加邊框 */
+        border-radius: 4px; /* 圓角 */
+        box-sizing: border-box; /* 防止內容溢出 */
+        width: 200px; /* 指定寬度 */
+        font-size: 16px; /* 字體大小 */
+    }
+
+
+    /* 標題列樣式 */
+    .title-bar {
+        background-color: #90caf9; /* 標題列背景色 */
+        color: #424242; /* 文字顏色 */
+        padding: 10px; /* 內邊距 */
+        border-radius: 4px; /* 圓角 */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 陰影 */
+        margin-bottom: 20px; /* 底部外邊距 */
+    }
+
+</style>
+<table style="border-collapse: collapse; width: 100%; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px;">
+    <tr>
+        <td style="border-right: 1px solid #ccc; padding: 20px;">
+            <h4 style="margin-bottom: 20px; font-weight: bold; color: #333;">輸入要查詢的設備借用日期區間</h4>
+            <form id="myForm" action="@Url.Action("Count_Borrowing_Times_selectdate", "Count_Borrowing_Times")" method="post" onsubmit="return validateDates();">
+                <div style="margin-bottom: 20px;">
+                    <input type="date" id="Date1" name="Date1" required="required" autocomplete="off" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                    <span>～</span>
+                    <input type="date" id="Date2" name="Date2" required="required" autocomplete="off" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                    <button type="submit" style="padding: 10px 20px; background-color: #45a049; color: #fff; border: none; border-radius: 4px; cursor: pointer;">查詢</button>
+                </div>
+            </form>
+        </td>
+    </tr>
+</table>
+
+<script>
+    function validateDates() {
+        var date1 = document.getElementById('Date1').value;
+        var date2 = document.getElementById('Date2').value;
+
+        if (date1 > date2) {
+            alert('第二組日期不能小於第一組日期');
+            return false; // 阻止表单提交
+        }
+
+        return true; // 允许表单提交
+    }
+</script>
+<hr />
+@if (!Model.Count_Borrowing_Times.Any())
+{
+    <div class="h-100 p-3 bg-info rounded-3">
+        <h2>您查詢的日期區間無統計資料(@Model.Date1～@Model.Date2)</h2>
+    </div>
+}
+else
+{
+    <div class="container">
+
+
+
+        <div class="h-100 p-3 bg-info rounded-3">
+            <h2>設備借用統計圖表(@Model.Date1～@Model.Date2)</h2>
+        </div>
+
+
+        <div class="col-md-10 offset-md-0">
+            <canvas id="barChart"></canvas>
+        </div>
+
+    </div>
+    <hr />
+    <h2 style="text-align: center;">設備借用次數統計表格(@Model.Date1～@Model.Date2)</h2>
+
+    <table class="table table-bordered table-striped" style="margin: 0 auto;">
+        <thead>
+            <tr>
+                <th>排序</th>
+                <th>借用設備名稱</th>
+                <th>借用設備型號</th>
+                <th>借用次數</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Count_Borrowing_Times)
+            {
+                <tr>
+                    <td>@Count_Borrowing_Times</td>
+                    <td>@Html.DisplayFor(modelItem => item.EName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Emodel)</td>
+                    <td>@Html.DisplayFor(modelItem => item.ECount_Borrowing_Times)</td>
+                </tr>
+                Count_Borrowing_Times++;
+            }
+        </tbody>
+    </table>
+    <script>
+        var labels = @Html.Raw(Json.Serialize(Model.Count_Borrowing_Times.Select(item => item.EName + "－" + item.Emodel).ToList()));
+        var datas = @Html.Raw(Json.Serialize(Model.Count_Borrowing_Times.Select(item => item.ECount_Borrowing_Times).ToList()));
+        var ctx = document.getElementById('barChart');
+        var myChart = new Chart(ctx, {
+            type: 'horizontalBar', // 将类型改为 'horizontalBar'
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '設備借用統計次數',
+                    data: datas,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',  // Red
+                        'rgba(54, 162, 235, 0.2)',  // Blue
+                        'rgba(255, 206, 50, 0.2)',  // Yellow
+                        'rgba(180, 0, 200, 0.2)', // Lavender
+                        'rgba(153, 102, 255, 0.2)', // Purple
+                        'rgba(255, 159, 64, 0.2)',  // Orange
+                        'rgba(0, 204, 102, 0.2)',   // Green
+                        'rgba(20, 0, 20, 0.2)',   // Magenta
+                        'rgba(100, 153, 255, 1)',   // Light Blue
+                        'rgba(0, 204, 204, 0.2)',   // Cyan
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',  // Red
+                        'rgba(54, 162, 235, 1)',  // Blue
+                        'rgba(255, 206, 86, 1)',  // Yellow
+                        'rgba(180, 0, 200, 0.2)', // Lavender
+                        'rgba(153, 102, 255, 1)', // Purple
+                        'rgba(255, 159, 64, 1)',  // Orange
+                        'rgba(0, 204, 102, 1)',   // Green
+                        'rgba(20, 0, 20, 0.2)',   // Magenta
+                        'rgba(100, 153, 255, 1)',   // Light Blue
+                        'rgba(0, 204, 204, 1)',   // Cyan
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                layout: {
+                    padding: {
+                        top: 20, // 顶部边距
+                        bottom: 20, // 底部边距
+                        left: 20, // 左侧边距
+                        right: 20 // 右侧边距
+                    }
+                },
+                scales: {
+                    xAxes: [{
+                        scaleLabel: { // 添加 x 轴的标签
+                            display: true,
+                            labelString: '借用次數', // 设置标签内容
+                            fontColor: 'black', // 设置标签颜色
+                            fontSize: 14 // 设置标签字体大小
+                        },
+                        ticks: {
+                            beginAtZero: true,
+                            stepSize: 1 // 设置每个刻度之间的距离为 1
+                        }
+                    }],
+                    yAxes: [{
+                        scaleLabel: { // 添加 y 轴的标签
+                            display: true,
+                            labelString: '借用設備名稱及型號', // 设置标签内容
+                            fontColor: 'black', // 设置标签颜色
+                            fontSize: 14, // 设置标签字体大小
+                        }
+                    }],
+                }
+            }
+        });
+    </script>
+}

@@ -1,0 +1,112 @@
+@model IEnumerable<EquipmentBorrowingSystem.Models.Application>
+
+@{
+    ViewData["Title"] = "管理人員新增設備借用";
+    Layout = "~/Views/Shared/_Layout_Manager_CreateApplicationCompleted.cshtml";
+    var itemcount = 0;
+    DateTime targetDate = new DateTime(2000, 10, 10);
+}
+
+<style>
+    .table-cell-centered {
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    tr.table-header {
+        border: 2px solid #333;
+    }
+
+    tr.table-header1 {
+        border: 1px solid #333;
+    }
+
+</style>
+
+<style>
+
+</style>
+<h2>申請列表</h2>
+
+<table class="table table-bordered" style="text-align: center; width: 100%;">
+    <tr class="table-header">
+        <th style="width: 5%;font-weight: bold; font-size: 20px;" class="table-cell-centered">
+            編號
+        </th>
+        <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">
+            申請日期<hr>
+            <span style="color: green;">@Html.DisplayNameFor(model => model.Borrow_Time)</span><hr>
+            <span style="color: orangered;">@Html.DisplayNameFor(model => model.Return_Time)</span>
+        </th>
+        <th style="width: 8%;font-weight: bold; font-size: 20px;" class="table-cell-centered">@Html.DisplayNameFor(model => model.Name)</th>
+        <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">聯絡方式</th>
+        <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">@Html.DisplayNameFor(model => model.Illustrate)</th>
+        <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">@Html.DisplayNameFor(model => model.Status)</th>
+        <th></th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+       
+        if (item.Status != "True")//判斷通過申請審核通過就不顯示在申請列表上(暫定)
+        {
+            itemcount++;
+            <tr class="table-header1">
+                <td style="width: 5%;font-size: 16px;" class="table-cell-centered"> @itemcount </td>
+                @if (item.Date_Of_Application == targetDate)
+                {
+                    <td style="font-size: 16px;" class="table-cell-centered table-row-overdue">管理者申請<hr><span style="color: green;">(借)@Html.DisplayFor(modelItem => item.Borrow_Time)</span><hr><span style="color: orangered;">(歸)@Html.DisplayFor(modelItem => item.Return_Time)</span></td>
+
+                }
+                else
+                {
+                    <td style="font-size: 16px;" class="table-cell-centered table-row-overdue">(申)@Html.DisplayFor(modelItem => item.Date_Of_Application)<hr><span style="color: green;">(借)@Html.DisplayFor(modelItem => item.Borrow_Time)</span><hr><span style="color: orangered;">(歸)@Html.DisplayFor(modelItem => item.Return_Time)</span></td>
+
+                }
+                <td style="width: 8%; font-size: 16px;" class="table-cell-centered">@Html.DisplayFor(modelItem => item.Name)</td>
+                <td style="font-size: 16px;" class="table-cell-centered">電話號碼：@Html.DisplayFor(modelItem => item.Mobile)<hr>信箱：@Html.DisplayFor(modelItem => item.fEmail)</td>
+
+                <td style="font-size: 16px;" class="table-cell-centered">@Html.DisplayFor(modelItem => item.Illustrate)</td>
+                <td style="font-size: 20px;" class="table-cell-centered">
+                    @if (item.Status == "Applying")
+                    {
+                        <span class="badge bg-warning">審核中</span>
+                    }
+                    else if (item.Status == "True")
+                    {
+                        <span class="badge bg-success">審核通過</span>
+                    }
+                </td>
+                <td style="width: 10%;">
+                    <form action="@Url.Action("Manage_CreateApplicationCompleted_Select_Application_List", "Manage_CreateApplicationCompleted")" method="post">
+                        <input type="hidden" name="fOrderGuid" value="@item.fOrderGuid" />
+                        <button type="submit" class="btn btn-info" style="margin-bottom: 10px;">詳細資訊</button>
+                    </form>
+                    @if (item.Status == "Applying")
+                    {
+                        <form action="@Url.Action("Manage_CreateApplicationCompleted_Accept_application", "Manage_CreateApplicationCompleted")" method="post">
+                            <input type="hidden" name="fOrderGuid" value="@item.fOrderGuid" />
+                            <button type="submit" class="btn btn-success" style="margin-bottom: 10px;">接受此申請</button>
+                        </form>
+
+                        <form action="@Url.Action("Manage_CreateApplicationCompleted_Delete_Application_Status", "Manage_CreateApplicationCompleted")" method="post">
+                            <input type="hidden" name="fOrderGuid" value="@item.fOrderGuid" />
+                            <button type="submit" onclick="return confirm('您確定要取消此筆申請紀錄嗎?')" class="btn btn-danger" style="margin-bottom: 10px;">取消申請</button>
+                        </form>
+                    }
+
+                </td>
+            </tr>
+        }
+
+    }
+</table>
+@* <script>
+                   function confirmCancel() {
+                       var confirmation = confirm("您確定要取消此筆申請紀錄嗎?");
+                       if (confirmation)
+                       {
+                           document.getElementById("cancelForm").submit();
+                       }
+    }
+             </script>*@

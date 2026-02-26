@@ -1,0 +1,104 @@
+@model IEnumerable<EquipmentBorrowingSystem.Models.Equipment_Details>
+@{
+    ViewData["Title"] = "瀏覽設備詳細資訊";
+    Layout = "~/Views/Shared/_Layout_Manager.cshtml";
+}
+<style>
+    .table {
+        width: 70%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+        .table th {
+            border: 2px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .table td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: #f2f2f2;
+        }
+    .table-cell-centered {
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .table-cell-centered1 {
+        vertical-align: middle;
+    }
+</style>
+@foreach (var item in Model)
+{
+
+    <tr>
+        <td>
+            <span style="font-size: 30px; font-weight: bold;">
+                設備名稱: @Html.DisplayFor(modelItem => item.EName)
+            </span>
+
+            <br />
+        </td>
+
+        <td>
+            <br><span style="font-size: 25px; font-weight: bold;">
+                設備型號: @Html.DisplayFor(modelItem => item.Emodel)
+            </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span style="font-size: 20px; font-weight: bold; text-align: right;">
+                設備來源: @Html.DisplayFor(modelItem => item.ESource)
+            </span>
+        </td>
+
+    </tr>
+
+    break;
+
+}
+
+<div style="width: 100%; margin: auto;">
+    <table class="table table-bordered table-striped " style="width: 60%;">
+        <thead>
+            <tr>
+                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">@Html.DisplayNameFor(model => model.EId)</th>
+                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">@Html.DisplayNameFor(model => model.IsBorrow)</th>
+                <th style="font-weight: bold; font-size: 20px;">@Html.DisplayNameFor(model => model.ECurrent_Location)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td style="font-size: 18px;" class="table-cell-centered">@Html.DisplayFor(modelItem => item.EId)</td>
+
+                    <td style="font-size: 20px;" class="table-cell-centered">
+                        @if (item.IsBorrow == "True")
+                        {
+                            <span class="badge bg-success">借用中</span>
+                        }
+                        else if (item.IsBorrow == "Missing")
+                        {
+                            <span class="badge bg-danger">遺失</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-dark">無</span>
+                        }
+
+                    </td>
+                    <td style="font-size: 18px;">@Html.DisplayFor(modelItem => item.ECurrent_Location)</td>
+                </tr>
+
+            }
+        </tbody>
+    </table>
+
+    <form action="Browse_All_equipment" method="get">
+        <button type="submit" class="btn btn-secondary">返回</button>
+    </form>
+</div>

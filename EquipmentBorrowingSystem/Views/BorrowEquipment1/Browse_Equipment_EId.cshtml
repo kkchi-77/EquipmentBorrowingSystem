@@ -1,0 +1,136 @@
+@model IEnumerable<EquipmentBorrowingSystem.Models.Equipment_Details>
+@{
+    ViewData["Title"] = "瀏覽可借用設備";
+    Layout = "~/Views/Shared/_Layout_Member.cshtml";
+}
+
+<style>
+    .table-cell-centered {
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    tr.table-header {
+        border: 2px solid #333;
+    }
+
+    tr.table-header1 {
+        border: 1px solid #333;
+    }
+
+    .notification {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 20px;
+        background-color: rgba(128, 128, 128, 0.9); /* 灰色背景 */
+        color: white;
+        border-radius: 10px;
+        text-align: center;
+        z-index: 1000;
+    }
+
+        .notification.show {
+            display: block;
+        }
+</style>
+
+<div id="notification" class="notification"></div>
+
+@foreach (var item in Model)
+{
+    <tr>
+        <td>
+            <span style="font-size: 30px; font-weight: bold;">
+                設備名稱: @Html.DisplayFor(modelItem => item.EName)
+            </span>
+            <br />
+        </td>
+        <td>
+            <br><span style="font-size: 25px; font-weight: bold;">
+                設備型號: @Html.DisplayFor(modelItem => item.Emodel)
+            </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <span style="font-size: 20px; font-weight: bold; text-align: right;">
+                設備來源: @Html.DisplayFor(modelItem => item.ESource)
+            </span>
+        </td>
+    </tr>
+    break;
+}
+
+<div style="width: 100%; margin: auto;">
+    <table class="table table-bordered table-striped table-cell-centered" style="width: 30%;">
+        <thead>
+            <tr class="table-header">
+                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">@Html.DisplayNameFor(model => model.EId)</th>
+                <th class="table-cell-centered"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr class="table-header1">
+                    <td style="font-size: 18px;" class="table-cell-centered">@Html.DisplayFor(modelItem => item.EId)</td>
+                    <td class="table-cell-centered">
+                        <form action="@Url.Action("AddEquipment", "BorrowEquipment1")" method="post" onsubmit="handleSubmit(event, '@item.EName', '@item.Emodel', '@item.EId');">
+                            <input type="hidden" name="EName" value="@item.EName" />
+                            <input type="hidden" name="Emodel" value="@item.Emodel" />
+                            <input type="hidden" name="EId" value="@item.EId" />
+                            <input type="hidden" name="ESource" value="@item.ESource" />
+                            <button type="submit" id="addButton" name="addButton" value="add">新增至申請清單</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <button class="btn btn-secondary" onclick="event.preventDefault(); window.location.href='@Url.Action("Browse_equipment", "BorrowEquipment1")'">返回</button>
+</div>
+<script>
+    var notificationTimeout;
+
+    function showNotification(message) {
+        var notification = document.getElementById('notification');
+        notification.innerHTML = message;
+        notification.classList.add('show');
+
+        // 清除先前的計時器
+        if (notificationTimeout) {
+            clearTimeout(notificationTimeout);
+        }
+
+        // 設置新的計時器
+        notificationTimeout = setTimeout(function () {
+            notification.classList.remove('show');
+        }, 2500); // 顯示時間為2.5秒
+    }
+
+    function handleSubmit(event, eName, eModel, eId) {
+        event.preventDefault();
+        var form = event.target;
+        var formData = new FormData(form);
+
+        // 顯示通知
+        var message = `您新增了<br>設備名稱：${eName}<br>設備型號：${eModel}<br>設備編號：${eId}<br><br>*如果您已新增完要借用的設備，請點選上方 <span style="color: red;">"申請清單"</span> 進行下個步驟`;
+        showNotification(message);
+
+        // 使用 Fetch API 進行表單提交
+        fetch('@Url.Action("AddEquipment", "BorrowEquipment1")', {
+            method: 'POST',
+            body: formData
+        }).then(response => {
+            if (response.ok) {
+                console.log('Form submitted successfully');
+            } else {
+                console.error('Form submission error');
+            }
+        }).catch(error => {
+            console.error('Form submission failed:', error);
+        });
+    }
+</script>
+
+
+
