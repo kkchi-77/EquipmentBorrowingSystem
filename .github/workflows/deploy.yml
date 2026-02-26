@@ -1,0 +1,49 @@
+name: Deploy to IIS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted   # 在 192.168.10.160 的 runner 上執行
+
+    steps:
+      - name: Checkout 程式碼
+        uses: actions/checkout@v4
+
+      - name: 設定 .NET 7
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Restore 套件
+        run: dotnet restore EquipmentBorrowingSystem/EquipmentBorrowingSystem.csproj
+
+      - name: 發布專案
+        run: >
+          dotnet publish EquipmentBorrowingSystem/EquipmentBorrowingSystem.csproj
+          -c Release
+          -o C:\deploy\EquipmentBorrowingSystem
+
+      - name: 停止 IIS 網站
+        run: |
+          Import-Module WebAdministration
+          Stop-WebSite -Name "EquipmentBorrowingSystem"
+        shell: powershell
+
+      - name: 複製檔案到 IIS 目錄
+        run: |
+          $src = "C:\deploy\EquipmentBorrowingSystem\*"
+          $dst = "C:\inetpub\wwwroot\EquipmentBorrowingSystem"
+          Copy-Item -Path $src -Destination $dst -Recurse -Force
+        shell: powershell
+
+      - name: 啟動 IIS 網站
+        run: |
+          Import-Module WebAdministration
+          Start-WebSite -Name "EquipmentBorrowingSystem"
+        shell: powershell
+
+      - name: 部署完成通知
+        run: echo "✅ 部署成功！"
