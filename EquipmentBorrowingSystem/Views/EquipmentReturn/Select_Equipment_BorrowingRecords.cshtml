@@ -1,375 +1,330 @@
 @model EquipmentBorrowingSystem.ViewModel.Select_Equipment_BorrowingRecordsViewModel
-
 @{
-    ViewBag.Title = "查看借用紀錄";
+    ViewBag.Title = "查詢借用紀錄";
     Layout = "~/Views/Shared/_Layout_Manager.cshtml";
+
     var itemcount = 0;
-    var pageSize = 4;
+    var pageSize = 10;
     var currentPage = Context.Request.Query["page"].FirstOrDefault();
-    if (string.IsNullOrEmpty(currentPage))
-    {
-        currentPage = "1";
-    }
+    if (string.IsNullOrEmpty(currentPage)) { currentPage = "1"; }
     var currentPageIndex = int.Parse(currentPage);
     var startIndex = (currentPageIndex - 1) * pageSize;
-    var endIndex = startIndex + pageSize;
     var items = Model.Application_Completed.Skip(startIndex).Take(pageSize);
-    var pageCount = (int)Math.Ceiling(Model.Application_Completed.Count() / (double)pageSize);
-    var application_equipment_count = 0;
-    foreach (var item in Model.Application_Completed)
-    {
-        application_equipment_count++;
-    }
+    var totalCount = Model.Application_Completed.Count();
+    var pageCount = (int)Math.Ceiling(totalCount / (double)pageSize);
     DateTime targetDate = new DateTime(2000, 10, 10);
+
+    bool isSearchResult = !string.IsNullOrEmpty(Model.IntputType);
 }
 
-<style>
-    .table-cell-centered {
-        vertical-align: middle;
-        text-align: center;
-    }
-
-    .table-center {
-        margin: 0 auto;
-    }
-
-    .table-container {
-        display: flex;
-        justify-content: center;
-    }
-
-    tr.table-header {
-        border: 2px solid #333;
-    }
-
-    tr.table-header1 {
-        border: 1px solid #333;
-    }
-    /* 美化選取查詢類型標籤 */
-    .select-label {
-        font-size: 18px; /* 放大字型大小 */
-        font-weight: bold; /* 加粗字型 */
-        color: #333; /* 文字顏色 */
-        margin-right: 10px; /* 右邊距 */
-    }
-
-    /* 美化下拉選單 */
-    .custom-select {
-        padding: 10px; /* 內邊距 */
-        border-radius: 6px; /* 圓角 */
-        border: 2px solid #007bff; /* 邊框 */
-        font-size: 16px; /* 字型大小 */
-        background-color: #fff; /* 背景顏色 */
-        cursor: pointer; /* 游標 */
-    }
-
-        /* 將下拉箭頭隱藏，以便自定義 */
-        .custom-select::-ms-expand {
-            display: none;
-        }
-
-        /* 下拉選單激活時的樣式 */
-        .custom-select:focus {
-            outline: none; /* 移除默認的聚焦樣式 */
-            border-color: #0056b3; /* 聚焦時的邊框顏色 */
-            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5); /* 聚焦時的陰影效果 */
-        }
-
-    .search-header {
-        background-color: #f0f0f0; /* 背景颜色 */
-        padding: 8px 16px; /* 内边距 */
-        border-radius: 5px; /* 圆角边框 */
-        border: 1px solid #666; /* 深灰色边框 */
-        margin: 0 auto 10px; /* 居中并设置底部边距 */
-
-        text-align: center; /* 文字居中 */
-        display: inline-block; /* 行内块元素 */
-        white-space: nowrap; /* 防止换行 */
-    }
-    /* 標題列樣式 */
-    .title-bar {
-        background-color: #90caf9; /* 標題列背景色 */
-        color: #424242; /* 文字顏色 */
-        padding: 10px; /* 內邊距 */
-        border-radius: 4px; /* 圓角 */
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 陰影 */
-        margin-bottom: 20px; /* 底部外邊距 */
-    }
-</style>
-<div class="title-bar">
-    <h3><strong>查詢借用紀錄</strong></h3>
+<div class="page-header">
+    <h4><i class="bi bi-clock-history me-2" style="color:#5b9bd5;"></i>查詢借用紀錄</h4>
+    <p class="page-subtitle">查詢所有已歸還的設備借用紀錄</p>
 </div>
-<table style="border-collapse: collapse; width: 100%; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px;">
-    <tr>
-        <td style="border-right: 1px solid #ccc; padding: 20px;">
-            <span class="select-label">選取查詢類別</span>
-            <select id="DateType" name="DateType" onchange="showInputFields()">
+
+@* ===== Search Box ===== *@
+<div class="search-box mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-auto">
+            <label class="form-label fw-semibold small mb-1">查詢類別</label>
+            <select id="DateType" name="DateType" class="form-select form-select-sm" onchange="showInputFields()" style="min-width:140px;">
                 <option value="Borrower">借用人</option>
+                <option value="Equipment">設備名稱/型號/編號</option>
                 <option value="ApplicationDate">申請日期</option>
                 <option value="BorrowDate">借用日期</option>
                 <option value="ReturnDate">歸還日期</option>
-
             </select>
-            <hr />
+        </div>
 
-            <span id="ApplicationDate_dateRangeLabel" class="select-label">(根據申請日期)輸入要查詢借用紀錄的日期區間</span>
-            <span id="BorrowDate_dateRangeLabel" class="select-label">(根據借用日期)輸入要查詢借用紀錄的日期區間</span>
-            <span id="ReturnDate_dateRangeLabel" class="select-label">(根據歸還日期)輸入要查詢借用紀錄的日期區間</span>
-            <form id="dateRangeForm" action="@Url.Action("Select_Equipment_BorrowingRecords", "EquipmentReturn")" method="post" onsubmit="return validateDates();" style="display: none;">
-                <div style="margin-bottom: 20px;">
-                    <input type="date" id="Date1" name="Date1" required="required" autocomplete="off" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
-                    <span>～</span>
-                    <input type="date" id="Date2" name="Date2" required="required" autocomplete="off" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
-                    <button type="submit" onclick="return addSelectedDateType()" style="padding: 10px 20px; background-color: #45a049; color: #fff; border: none; border-radius: 4px; cursor: pointer;">查詢</button>
+        <!-- 借用人搜尋 -->
+        <div id="borrowerInputGroup" class="col-12 col-md-auto">
+            <form id="borrowerForm" action="@Url.Action("Select_Equipment_BorrowingRecords", "EquipmentReturn")" method="post">
+                <label class="form-label fw-semibold small mb-1">借用人姓名（關鍵字）</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" id="Borrow_Name" name="Borrow_Name" placeholder="請輸入關鍵字"
+                           class="form-control" style="min-width:160px;" />
+                    <button type="submit" onclick="return addHiddenType('borrowerForm')" class="btn btn-accent">
+                        <i class="bi bi-search"></i> 查詢
+                    </button>
                 </div>
             </form>
+        </div>
 
-            <span id="borrowerLabel" class="select-label">輸入借用人姓名(關鍵字查詢)</span>
-            <form id="borrowerForm" action="@Url.Action("Select_Equipment_BorrowingRecords", "EquipmentReturn")" method="post" onsubmit="return validateDates();" style="display: none;">
-                <div style="margin-bottom: 20px;">
-                    <input placeholder="請輸入關鍵字" type="text" id="Borrow_Name" name="Borrow_Name" required="required" autocomplete="off" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
-                    <button type="submit" onclick="return addSelectedBorrowType()" style="padding: 10px 20px; background-color: #45a049; color: #fff; border: none; border-radius: 4px; cursor: pointer;">查詢</button>
+        <!-- 設備搜尋 -->
+        <div id="equipmentInputGroup" class="col-12 col-md-auto" style="display:none;">
+            <form id="equipmentForm" action="@Url.Action("Select_Equipment_BorrowingRecords", "EquipmentReturn")" method="post">
+                <label class="form-label fw-semibold small mb-1">設備名稱 / 型號 / 編號</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" id="Equipment_Keyword" name="Equipment_Keyword" placeholder="例如：VR頭盔、Meta Quest 3"
+                           class="form-control" style="min-width:200px;" />
+                    <button type="submit" onclick="return addHiddenType('equipmentForm')" class="btn btn-accent">
+                        <i class="bi bi-search"></i> 查詢
+                    </button>
                 </div>
             </form>
+        </div>
 
-        </td>
-    </tr>
-</table>
-<script>
-    function addSelectedDateType() {
-        var selectedType = document.getElementById("DateType").value; // 取得選擇的日期類型
-        var hiddenInput = document.createElement("input"); // 創建一個隱藏的input元素
-        hiddenInput.type = "hidden";
-        hiddenInput.name = "IntputType";
-        hiddenInput.value = selectedType;
-        document.getElementById("dateRangeForm").appendChild(hiddenInput); // 將隱藏欄位添加到form中
-        return true; // 確保form可以繼續提交
-    }
-    function addSelectedBorrowType() {
-        var selectedType = document.getElementById("DateType").value; // 取得選擇的日期類型
-        var hiddenInput = document.createElement("input"); // 創建一個隱藏的input元素
-        hiddenInput.type = "hidden";
-        hiddenInput.name = "IntputType";
-        hiddenInput.value = selectedType;
+        <!-- 日期範圍搜尋 -->
+        <div id="dateRangeInputGroup" class="col-12 col-md-auto" style="display:none;">
+            <form id="dateRangeForm" action="@Url.Action("Select_Equipment_BorrowingRecords", "EquipmentReturn")" method="post" onsubmit="return validateDates()">
+                <label id="dateRangeLabel" class="form-label fw-semibold small mb-1">日期區間</label>
+                <div class="input-group input-group-sm">
+                    <input type="date" id="Date1" name="Date1" required class="form-control" />
+                    <span class="input-group-text">～</span>
+                    <input type="date" id="Date2" name="Date2" required class="form-control" />
+                    <button type="submit" onclick="return addHiddenType('dateRangeForm')" class="btn btn-accent">
+                        <i class="bi bi-search"></i> 查詢
+                    </button>
+                </div>
+            </form>
+        </div>
 
-        document.getElementById("borrowerForm").appendChild(hiddenInput); // 將隱藏欄位添加到form中
-        return true; // 確保form可以繼續提交
-    }
-</script>
-<script>
-    // 當頁面載入時執行一次 showInputFields() 函數
-    window.onload = function () {
-        showInputFields();
-    };
-    // 定義 showInputFields() 函數
-    function showInputFields() {
-        var selectedValue = document.getElementById("DateType").value;
-        var ApplicationDate_dateRangeLabel = document.getElementById("ApplicationDate_dateRangeLabel");
-        var BorrowDate_dateRangeLabel = document.getElementById("BorrowDate_dateRangeLabel");
-        var ReturnDate_dateRangeLabel = document.getElementById("ReturnDate_dateRangeLabel");
-        var dateRangeForm = document.getElementById("dateRangeForm");
-        var borrowerLabel = document.getElementById("borrowerLabel");
-        var borrowerForm = document.getElementById("borrowerForm");
+        <div class="col-12 col-md-auto">
+            <label class="form-label fw-semibold small mb-1 d-block">&nbsp;</label>
+            <a href="@Url.Action("Select_Equipment_BorrowingRecords", "EquipmentReturn")" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-clockwise me-1"></i>全部顯示
+            </a>
+        </div>
+    </div>
+</div>
 
-        // 根據所選擇的選項顯示或隱藏相應的輸入欄位
-        if (selectedValue === "ApplicationDate") {
-            ApplicationDate_dateRangeLabel.style.display = "block";
-            BorrowDate_dateRangeLabel.style.display = "none";
-            ReturnDate_dateRangeLabel.style.display = "none";
-            dateRangeForm.style.display = "block";
-            borrowerLabel.style.display = "none";
-            borrowerForm.style.display = "none";
-        }
-        else if (selectedValue === "BorrowDate") {
-            ApplicationDate_dateRangeLabel.style.display = "none";
-            BorrowDate_dateRangeLabel.style.display = "block";
-            ReturnDate_dateRangeLabel.style.display = "none";
-            dateRangeForm.style.display = "block";
-            borrowerLabel.style.display = "none";
-            borrowerForm.style.display = "none";
-        } else if ( selectedValue === "ReturnDate") {
-            ApplicationDate_dateRangeLabel.style.display = "none";
-            BorrowDate_dateRangeLabel.style.display = "none";
-            ReturnDate_dateRangeLabel.style.display = "block";
-            dateRangeForm.style.display = "block";
-            borrowerLabel.style.display = "none";
-            borrowerForm.style.display = "none";
-        }
-        else if (selectedValue === "Borrower") {
-            ApplicationDate_dateRangeLabel.style.display = "none";
-            BorrowDate_dateRangeLabel.style.display = "none";
-            ReturnDate_dateRangeLabel.style.display = "none";
-            dateRangeForm.style.display = "none";
-            borrowerLabel.style.display = "block";
-            borrowerForm.style.display = "block";
-        }
-    }
-</script>
-@*  // 定義 showInputFields() 函數
-    function showInputFields() {
-        var selectedValue = document.getElementById("DateType").value;
-        var ApplicationDate_dateRangeLabel = document.getElementById("ApplicationDate_dateRangeLabel");
-        var BorrowDate_dateRangeLabel = document.getElementById("BorrowDate_dateRangeLabel");
-        var ReturnDate_dateRangeLabel = document.getElementById("ReturnDate_dateRangeLabel");
-        var dateRangeForm = document.getElementById("dateRangeForm");
-        var borrowerLabel = document.getElementById("borrowerLabel");
-        var borrowerForm = document.getElementById("borrowerForm");
-
-        // 根據所選擇的選項顯示或隱藏相應的輸入欄位
-        if (selectedValue === "ApplicationDate") {
-            ApplicationDate_dateRangeLabel.style.display = "block";
-            BorrowDate_dateRangeLabel.style.display == "none";
-            ReturnDate_dateRangeLabel.style.display == "none";
-            dateRangeForm.style.display = "block";
-            borrowerLabel.style.display = "none";
-            borrowerForm.style.display = "none";
-        }
-        else if (selectedValue === "BorrowDate") {
-            ApplicationDate_dateRangeLabel.style.display = "none";
-            BorrowDate_dateRangeLabel.style.display == "block";
-            ReturnDate_dateRangeLabel.style.display == "none";
-            dateRangeForm.style.display = "block";
-            borrowerLabel.style.display = "none";
-            borrowerForm.style.display = "none";
-        } else if ( selectedValue === "ReturnDate") {
-            ApplicationDate_dateRangeLabel.style.display = "none";
-            BorrowDate_dateRangeLabel.style.display == "none";
-            ReturnDate_dateRangeLabel.style.display == "block";
-            dateRangeForm.style.display = "block";
-            borrowerLabel.style.display = "none";
-            borrowerForm.style.display = "none";
-        }
-        else if (selectedValue === "Borrower") {
-            ApplicationDate_dateRangeLabel.style.display = "none";
-            BorrowDate_dateRangeLabel.style.display == "none";
-            ReturnDate_dateRangeLabel.style.display == "none";
-            dateRangeForm.style.display = "none";
-            borrowerLabel.style.display = "block";
-            borrowerForm.style.display = "block";
-        }
-    }
- *@<script>
-    function validateDates() {
-        var date1 = document.getElementById('Date1').value;
-        var date2 = document.getElementById('Date2').value;
-
-        if (date1 > date2) {
-            alert('第二組日期不能小於第一組日期');
-            return false; // 阻止表单提交
-        }
-
-        return true; // 允许表单提交
-    }
-</script>
-<hr></hr>
-
-@if (@Model.IntputType == "ApplicationDate")
+@* ===== 搜尋結果說明 ===== *@
+@if (isSearchResult)
 {
-    <h4 class="search-header">搜尋類別:申請日期，(@Model.Date1～@Model.Date2)，共 @application_equipment_count 筆資料</h4>
-}
-else if (@Model.IntputType == "BorrowDate")
-{
-    <h4 class="search-header">搜尋類別:借用日期，借用日:(@Model.Date1～@Model.Date2)，共 @application_equipment_count 筆資料</h4>
-}
-else if (@Model.IntputType == "ReturnDate")
-{
-    <h4 class="search-header">搜尋類別:歸還日期，(@Model.Date1～@Model.Date2)，共 @application_equipment_count 筆資料</h4>
-}
-else if (@Model.IntputType == "Borrower")
-{
-    <h4 class="search-header">搜尋類別:借用人，搜尋關鍵字:@Model.Borrow_Name，共 @application_equipment_count 筆資料</h4>
+    <div class="alert alert-light border d-flex align-items-center gap-2 py-2 mb-3">
+        <i class="bi bi-info-circle text-primary"></i>
+        <small>
+            @if (Model.IntputType == "ApplicationDate")
+            { <span>申請日期：@Model.Date1 ～ @Model.Date2，共 <strong>@totalCount</strong> 筆</span> }
+            else if (Model.IntputType == "BorrowDate")
+            { <span>借用日期：@Model.Date1 ～ @Model.Date2，共 <strong>@totalCount</strong> 筆</span> }
+            else if (Model.IntputType == "ReturnDate")
+            { <span>歸還日期：@Model.Date1 ～ @Model.Date2，共 <strong>@totalCount</strong> 筆</span> }
+            else if (Model.IntputType == "Borrower")
+            { <span>借用人關鍵字「@Model.Borrow_Name」，共 <strong>@totalCount</strong> 筆</span> }
+            else if (Model.IntputType == "Equipment")
+            { <span>設備關鍵字「@Model.Equipment_Keyword」，共 <strong>@totalCount</strong> 筆</span> }
+        </small>
+    </div>
 }
 
+@* ===== Stat Cards ===== *@
+@if (!isSearchResult)
+{
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="stat-card stat-primary">
+                <div class="stat-icon"><i class="bi bi-clipboard-data"></i></div>
+                <div>
+                    <div class="stat-number">@totalCount</div>
+                    <div class="stat-label">歸還紀錄總數</div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
-<div style="table-container">
-
-    <table class="table table-bordered" style="width: 100%;  text-align: center;">
-        <!-- 表格頭部 -->
-        <thead>
-            <tr class="table-header">
-                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">
-                    編號
-                </th>
-                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">
-                    申請日期<hr>
-                    <span style="color: green;">借用時間</span><hr>
-                    <span style="color: orangered;">歸還時間</span>
-                </th>
-                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">借用人</th>
-
-                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">聯絡方式</th>
-                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">用途說明<hr>證件抵押</td>
-                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">設備移交人(借出)<hr>設備接收人(歸還)</th>
-                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">狀態</th>
-                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered"></th>
-            </tr>
-        <thead />
-
-
-        <!-- 檢查是否在當前頁碼的範圍內 -->
-            @foreach (var item in  Model.Application_Completed)
-            {
-
-                itemcount++;
-
-                @if (itemcount > startIndex && itemcount <= endIndex)
+@* ===== Main Table ===== *@
+<div class="content-card">
+    <div class="content-card-header">
+        <h5><i class="bi bi-clock-history"></i> 借用紀錄</h5>
+        <span class="badge" style="background:rgba(91,155,213,0.15);color:#2d6fa3;font-weight:600;">
+            共 @totalCount 筆（第 @currentPageIndex / @Math.Max(pageCount, 1) 頁）
+        </span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover table-custom mb-0">
+            <thead>
+                <tr>
+                    <th style="width:3%">#</th>
+                    <th style="width:15%">日期資訊</th>
+                    <th style="width:7%">借用人</th>
+                    <th style="width:14%">聯絡方式</th>
+                    <th style="width:18%">借用設備</th>
+                    <th style="width:12%">用途／證件</th>
+                    <th style="width:10%">移交／接收</th>
+                    <th style="width:6%">狀態</th>
+                    <th style="width:15%">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!items.Any())
                 {
-                    @if (item.Status == "Returned")
-                    {
-                    <tr class="table-header1">
-                        <td style="font-size: 16px;" class="table-cell-centered table-row-overdue">@itemcount </td>
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>目前無借用紀錄
+                        </td>
+                    </tr>
+                }
+                @foreach (var item in items)
+                {
+                    itemcount++;
+                    var rowNum = startIndex + itemcount;
+                    <tr>
+                        <td class="text-center text-muted">@rowNum</td>
+                        <td>
                             @if (item.Date_Of_Application == targetDate)
                             {
-                            <td style="font-size: 16px;" class="table-cell-centered ">管理者申請<hr><span style="color: green;">(借)@Html.DisplayFor(modelItem => item.Borrow_Time)</span><hr><span style="color: orangered;">(歸)@Html.DisplayFor(modelItem => item.Return_Time)</span></td>
-
+                                <span class="badge bg-secondary mb-1">管理者申請</span><br />
                             }
                             else
                             {
-                            <td style="font-size: 16px;" class="table-cell-centered ">(申)@Html.DisplayFor(modelItem => item.Date_Of_Application)<hr><span style="color: green;">(借)@Html.DisplayFor(modelItem => item.Borrow_Time)</span><hr><span style="color: orangered;">(歸)@Html.DisplayFor(modelItem => item.Return_Time)</span></td>
-
+                                <small class="text-muted">(申) @item.Date_Of_Application.ToString("yyyy/MM/dd")</small><br />
                             }
-                        <td style="font-size: 16px;" class="table-cell-centered table-row-overdue" border="1">@Html.DisplayFor(modelItem => item.Name)</td>
-                        <td style="font-size: 16px;" class="table-cell-centered table-row-overdue">電話號碼：@Html.DisplayFor(modelItem => item.Mobile)<hr>信箱：@Html.DisplayFor(modelItem => item.fEmail)</td>
-                        <td style="font-size: 16px;" class="table-cell-centered table-row-overdue">@Html.DisplayFor(modelItem => item.Illustrate)<hr>@Html.DisplayFor(modelItem => item.Credentials_Mortgage)</td>
-                        <td style="font-size: 16px;" class="table-cell-centered table-row-overdue">@Html.DisplayFor(modelItem => item.Equipment_Handover_Person)<hr>@Html.DisplayFor(modelItem => item.Equipment_Recive_Person)</td>
-                        <td style="font-size: 20px;" class="table-cell-centered">
-                                @if (item.Status == "Returned")
-                                {
-                                <span class="badge bg-success">設備已歸還</span>
-                                }
+                            <small style="color:#1a7a33;"><i class="bi bi-box-arrow-up-right"></i> @item.Borrow_Time.ToString("yyyy/MM/dd HH:mm")</small><br />
+                            <small style="color:#c0392b;"><i class="bi bi-box-arrow-in-down-left"></i> @(item.Return_Time.Year >= 9999 ? "無期限" : item.Return_Time.ToString("yyyy/MM/dd HH:mm"))</small>
                         </td>
-                        <td class="table-cell-centered">
-                            <form action="@Url.Action("Select_Equipment_List", "EquipmentReturn")" method="post">
-                                <input type="hidden" name="fOrderGuid" value="@item.fOrderGuid" />
-                                <button type="submit" class="btn btn-info" style="margin-bottom: 10px;"><strong>詳細資訊</strong></button>
-                            </form>
-                            <form action="@Url.Action("Delete_Equipment_BorrowingRecords", "EquipmentReturn")" method="post">
-                                <input type="hidden" name="fOrderGuid" value="@item.fOrderGuid" />
-                                <button type="submit" onclick="return confirm('您確定要取消此筆申請紀錄嗎?')" class="btn btn-danger" style="margin-bottom: 10px;">刪除此筆紀錄</button>
-                            </form>
-
+                        <td class="fw-semibold">@item.Name</td>
+                        <td>
+                            <small><i class="bi bi-telephone me-1"></i>@item.Mobile</small><br />
+                            <small class="text-muted"><i class="bi bi-envelope me-1"></i>@item.fEmail</small>
+                        </td>
+                        <td>
+                            @if (Model.EquipmentSummary != null && Model.EquipmentSummary.ContainsKey(item.fOrderGuid))
+                            {
+                                @foreach (var eq in Model.EquipmentSummary[item.fOrderGuid])
+                                {
+                                    <span class="badge bg-light text-dark border mb-1" style="font-size:.72rem; font-weight:500;">
+                                        <i class="bi bi-box-seam me-1"></i>@eq
+                                    </span><br />
+                                }
+                            }
+                            else
+                            {
+                                <small class="text-muted">-</small>
+                            }
+                        </td>
+                        <td>
+                            <small>@item.Illustrate</small>
+                            @if (!string.IsNullOrWhiteSpace(item.Credentials_Mortgage))
+                            {
+                                <br /><small class="text-muted"><i class="bi bi-card-text me-1"></i>@item.Credentials_Mortgage</small>
+                            }
+                        </td>
+                        <td>
+                            <small><i class="bi bi-box-arrow-up-right me-1 text-success"></i>@item.Equipment_Handover_Person</small><br />
+                            <small><i class="bi bi-box-arrow-in-down-left me-1 text-primary"></i>@item.Equipment_Recive_Person</small>
+                        </td>
+                        <td class="text-center">
+                            <span class="status-badge badge-returned" style="background:rgba(39,174,96,0.12);color:#1a7a33;font-size:.75rem;padding:3px 10px;border-radius:20px;">
+                                <i class="bi bi-check-circle-fill"></i> 已歸還
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100" style="font-size:.78rem;"
+                                        onclick="showDetailModal('@item.fOrderGuid', '@Url.Action("GetApplicationDetails", "ApplicationCompleted")')">
+                                    <i class="bi bi-list-ul me-1"></i>詳細資訊
+                                </button>
+                                <form action="@Url.Action("Delete_Equipment_BorrowingRecords", "EquipmentReturn")" method="post">
+                                    <input type="hidden" name="fOrderGuid" value="@item.fOrderGuid" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100"
+                                            onclick="return confirm('確定要刪除此筆借用紀錄嗎？此操作無法復原。')" style="font-size:.78rem;">
+                                        <i class="bi bi-trash me-1"></i>刪除紀錄
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
-                    }
                 }
-
-            }
-        <!-- 表格內容 -->
-
-    </table>
-
+            </tbody>
+        </table>
+    </div>
 </div>
-<!-- Pagination -->
+
+@* ===== Pagination ===== *@
 @if (pageCount > 1)
 {
-    <nav aria-label="Page navigation example">
-        <ul class="pagination justify-content-center">
-            @for (int i = 1; i <= pageCount; i++)
+    <nav aria-label="分頁導覽" class="mt-3">
+        <ul class="pagination pagination-sm justify-content-center flex-wrap">
+            @if (currentPageIndex > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="?page=@(currentPageIndex - 1)"><i class="bi bi-chevron-left"></i></a>
+                </li>
+            }
+            @{
+                // 顯示頁碼範圍（最多顯示 7 個頁碼）
+                int startPage = Math.Max(1, currentPageIndex - 3);
+                int endPage = Math.Min(pageCount, startPage + 6);
+                startPage = Math.Max(1, endPage - 6);
+            }
+            @if (startPage > 1)
+            {
+                <li class="page-item"><a class="page-link" href="?page=1">1</a></li>
+                @if (startPage > 2) { <li class="page-item disabled"><span class="page-link">...</span></li> }
+            }
+            @for (int i = startPage; i <= endPage; i++)
             {
                 <li class="page-item @(i == currentPageIndex ? "active" : "")">
                     <a class="page-link" href="?page=@i">@i</a>
                 </li>
             }
+            @if (endPage < pageCount)
+            {
+                @if (endPage < pageCount - 1) { <li class="page-item disabled"><span class="page-link">...</span></li> }
+                <li class="page-item"><a class="page-link" href="?page=@pageCount">@pageCount</a></li>
+            }
+            @if (currentPageIndex < pageCount)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="?page=@(currentPageIndex + 1)"><i class="bi bi-chevron-right"></i></a>
+                </li>
+            }
         </ul>
     </nav>
+}
+
+@await Html.PartialAsync("_DetailModal")
+
+@section Scripts {
+<script>
+    window.onload = function () { showInputFields(); };
+
+    function showInputFields() {
+        var v = document.getElementById("DateType").value;
+        var borrowerGroup = document.getElementById("borrowerInputGroup");
+        var equipmentGroup = document.getElementById("equipmentInputGroup");
+        var dateGroup = document.getElementById("dateRangeInputGroup");
+        var dateLabel = document.getElementById("dateRangeLabel");
+
+        var labels = {
+            ApplicationDate: "(申請日期) 查詢區間",
+            BorrowDate: "(借用日期) 查詢區間",
+            ReturnDate: "(歸還日期) 查詢區間"
+        };
+
+        borrowerGroup.style.display = "none";
+        equipmentGroup.style.display = "none";
+        dateGroup.style.display = "none";
+
+        if (v === "Borrower") {
+            borrowerGroup.style.display = "";
+        } else if (v === "Equipment") {
+            equipmentGroup.style.display = "";
+        } else {
+            dateGroup.style.display = "";
+            dateLabel.textContent = labels[v] || "日期區間";
+        }
+    }
+
+    function addHiddenType(formId) {
+        var v = document.getElementById("DateType").value;
+        var form = document.getElementById(formId);
+        // 移除先前可能加過的 hidden input
+        var existing = form.querySelector('input[name="IntputType"]');
+        if (existing) existing.remove();
+        var input = document.createElement("input");
+        input.type = "hidden"; input.name = "IntputType"; input.value = v;
+        form.appendChild(input);
+        return true;
+    }
+
+    function validateDates() {
+        var d1 = document.getElementById("Date1").value;
+        var d2 = document.getElementById("Date2").value;
+        if (d1 > d2) { alert("結束日期不能早於開始日期"); return false; }
+        return true;
+    }
+</script>
 }

@@ -57,7 +57,7 @@
                                     <small class="text-muted">(申) @item.Date_Of_Application.ToString("yyyy/MM/dd")</small><br />
                                 }
                                 <small style="color:#1a7a33;"><i class="bi bi-box-arrow-up-right"></i> @item.Borrow_Time.ToString("yyyy/MM/dd HH:mm")</small><br />
-                                <small style="color:#c0392b;"><i class="bi bi-box-arrow-in-down-left"></i> @item.Return_Time.ToString("yyyy/MM/dd HH:mm")</small>
+                                <small style="color:#c0392b;"><i class="bi bi-box-arrow-in-down-left"></i> @(item.Return_Time.Year >= 9999 ? "無期限" : item.Return_Time.ToString("yyyy/MM/dd HH:mm"))</small>
                             </td>
                             <td class="fw-semibold">@item.Name</td>
                             <td>
@@ -81,12 +81,11 @@
                             </td>
                             <td>
                                 <div class="d-flex flex-column gap-1">
-                                    <form action="@Url.Action("Select_Application_List", "BorrowEquipment1")" method="post">
-                                        <input type="hidden" name="fOrderGuid" value="@item.fOrderGuid" />
-                                        <button type="submit" class="btn btn-outline-primary btn-sm w-100" style="font-size:.78rem;">
-                                            <i class="bi bi-list-ul me-1"></i>詳細資訊
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-outline-primary btn-sm w-100"
+                                            style="font-size:.78rem;"
+                                            onclick="showDetailModal('@item.fOrderGuid', '@Url.Action("GetApplicationDetails", "BorrowEquipment1")')">
+                                        <i class="bi bi-list-ul me-1"></i>詳細資訊
+                                    </button>
                                     @if (item.Status == "Applying")
                                     {
                                         <form action="@Url.Action("Delete_Application_Status", "BorrowEquipment1")" method="post">
@@ -106,3 +105,5 @@
         </table>
     </div>
 </div>
+
+@await Html.PartialAsync("_DetailModal")

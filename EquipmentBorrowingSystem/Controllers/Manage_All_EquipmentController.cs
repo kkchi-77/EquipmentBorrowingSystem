@@ -1,21 +1,18 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using EquipmentBorrowingSystem.Data;
-using EquipmentBorrowingSystem.Migrations;
 using EquipmentBorrowingSystem.Models;
 using EquipmentBorrowingSystem.ViewModel;
-using System.Security.Cryptography;
-using System.IO;
-using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 namespace EquipmentBorrowingSystem.Controllers
 {
     public class Manage_All_EquipmentController : Controller
     {
         private readonly EmployeeContext _context;
-        public Manage_All_EquipmentController(EmployeeContext context)
+        private readonly IWebHostEnvironment _env;
+        public Manage_All_EquipmentController(EmployeeContext context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
         public IActionResult Index()
@@ -116,7 +113,32 @@ namespace EquipmentBorrowingSystem.Controllers
         }
 
 
-        //根據選擇的設備名稱、設備型號、設備來源查看此設備的設備編號//根據選擇的設備名稱、設備型號、設備來源查看此設備的設備編號//根據選擇的設備名稱、設備型號、設備來源查看此設備的設備編號
+        // AJAX: 取得設備編號列表（供 Modal 使用）
+        public IActionResult GetEquipmentEIds(string eName, string emodel, string eSource)
+        {
+            var details = _context.Equipment_Details
+                .Where(m => m.EName == eName && m.Emodel == emodel && m.ESource == eSource)
+                .OrderBy(m => m.EId)
+                .ToList();
+
+            // 自定義排序
+            details = details.OrderBy(m =>
+            {
+                if (int.TryParse(m.EId, out int result)) return result;
+                else return int.MaxValue;
+            }).ToList();
+
+            var result = details.Select(d => new
+            {
+                eId = d.EId,
+                isBorrow = d.IsBorrow,
+                eCurrent_Location = d.ECurrent_Location
+            });
+
+            return Json(result);
+        }
+
+        //根據選擇的設備名稱、設備型號、設備來源查看此設備的設備編號
         public ActionResult Browse_Equipment_EId(string EName, string Emodel, string ESource)
         {
             var browse_equipment_EId = _context.Equipment_Details
@@ -156,21 +178,10 @@ namespace EquipmentBorrowingSystem.Controllers
         {
             if (model.FileInput != null && model.FileInput.Length > 0)
             {
-                // 取得檔案名稱
                 var fileName = Path.GetFileName(model.FileInput.FileName);
-                // 指定檔案存儲路徑
-                var filePath = Path.Combine("C:\\inetpub\\wwwroot\\EquipmentBorrow_System\\wwwroot\\Image", fileName);
-                // 確認路徑中是否已存在相同檔案
-                if (!System.IO.File.Exists(filePath))
-                {
-                    // 如果不存在相同檔案，保存新檔案
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        model.FileInput.CopyTo(stream);
-                    }
-                }
-
-                // 將檔案保存到指定路徑
+                var imageDir = Path.Combine(_env.WebRootPath, "Image");
+                if (!Directory.Exists(imageDir)) Directory.CreateDirectory(imageDir);
+                var filePath = Path.Combine(imageDir, fileName);
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     model.FileInput.CopyTo(stream);
@@ -309,20 +320,10 @@ namespace EquipmentBorrowingSystem.Controllers
         {
             if (model.FileInput != null && model.FileInput.Length > 0)
             {
-                // 取得檔案名稱
                 var fileName = Path.GetFileName(model.FileInput.FileName);
-                // 指定檔案存儲路徑
-                var filePath = Path.Combine("C:\\inetpub\\wwwroot\\EquipmentBorrow_System\\wwwroot\\Image", fileName);
-                // 確認路徑中是否已存在相同檔案
-                {
-                    // 如果不存在相同檔案，保存新檔案
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        model.FileInput.CopyTo(stream);
-                    }
-                }
-
-                // 將檔案保存到指定路徑
+                var imageDir = Path.Combine(_env.WebRootPath, "Image");
+                if (!Directory.Exists(imageDir)) Directory.CreateDirectory(imageDir);
+                var filePath = Path.Combine(imageDir, fileName);
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     model.FileInput.CopyTo(stream);

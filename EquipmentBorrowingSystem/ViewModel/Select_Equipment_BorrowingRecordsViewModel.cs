@@ -9,5 +9,9 @@ namespace EquipmentBorrowingSystem.ViewModel
         public string Date2 { get; set; }
 
         public string Borrow_Name { get; set; }
+        public string Equipment_Keyword { get; set; }
+
+        // 每筆紀錄對應的設備摘要（key: fOrderGuid, value: 設備名稱清單）
+        public Dictionary<string, List<string>> EquipmentSummary { get; set; }
     }
 }

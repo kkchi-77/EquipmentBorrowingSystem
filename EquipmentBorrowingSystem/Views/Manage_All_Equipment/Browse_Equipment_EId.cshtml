@@ -1,104 +1,81 @@
 @model IEnumerable<EquipmentBorrowingSystem.Models.Equipment_Details>
 @{
-    ViewData["Title"] = "瀏覽設備詳細資訊";
+    ViewData["Title"] = "設備編號詳細資訊";
     Layout = "~/Views/Shared/_Layout_Manager.cshtml";
-}
-<style>
-    .table {
-        width: 70%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-    }
-
-        .table th {
-            border: 2px solid #333;
-            padding: 8px;
-            text-align: left;
-        }
-
-        .table td {
-            border: 1px solid #333;
-            padding: 8px;
-            text-align: left;
-        }
-
-        .table th {
-            background-color: #f2f2f2;
-        }
-    .table-cell-centered {
-        vertical-align: middle;
-        text-align: center;
-    }
-
-    .table-cell-centered1 {
-        vertical-align: middle;
-    }
-</style>
-@foreach (var item in Model)
-{
-
-    <tr>
-        <td>
-            <span style="font-size: 30px; font-weight: bold;">
-                設備名稱: @Html.DisplayFor(modelItem => item.EName)
-            </span>
-
-            <br />
-        </td>
-
-        <td>
-            <br><span style="font-size: 25px; font-weight: bold;">
-                設備型號: @Html.DisplayFor(modelItem => item.Emodel)
-            </span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span style="font-size: 20px; font-weight: bold; text-align: right;">
-                設備來源: @Html.DisplayFor(modelItem => item.ESource)
-            </span>
-        </td>
-
-    </tr>
-
-    break;
-
+    var first = Model.FirstOrDefault();
 }
 
-<div style="width: 100%; margin: auto;">
-    <table class="table table-bordered table-striped " style="width: 60%;">
-        <thead>
-            <tr>
-                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">@Html.DisplayNameFor(model => model.EId)</th>
-                <th style="font-weight: bold; font-size: 20px;" class="table-cell-centered">@Html.DisplayNameFor(model => model.IsBorrow)</th>
-                <th style="font-weight: bold; font-size: 20px;">@Html.DisplayNameFor(model => model.ECurrent_Location)</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
+<div class="page-header">
+    <h4><i class="bi bi-list-ol me-2" style="color:#5b9bd5;"></i>設備編號詳細資訊</h4>
+    @if (first != null)
+    {
+        <p class="page-subtitle">@first.EName — @first.Emodel（@first.ESource）</p>
+    }
+</div>
+
+<div class="content-card">
+    <div class="content-card-header">
+        <h5><i class="bi bi-list-ol"></i> 編號列表</h5>
+        <span class="badge" style="background:rgba(91,155,213,0.15);color:#2d6fa3;font-weight:600;">
+            共 @Model.Count() 筆
+        </span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover table-custom mb-0">
+            <thead>
                 <tr>
-                    <td style="font-size: 18px;" class="table-cell-centered">@Html.DisplayFor(modelItem => item.EId)</td>
-
-                    <td style="font-size: 20px;" class="table-cell-centered">
-                        @if (item.IsBorrow == "True")
-                        {
-                            <span class="badge bg-success">借用中</span>
-                        }
-                        else if (item.IsBorrow == "Missing")
-                        {
-                            <span class="badge bg-danger">遺失</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-dark">無</span>
-                        }
-
-                    </td>
-                    <td style="font-size: 18px;">@Html.DisplayFor(modelItem => item.ECurrent_Location)</td>
+                    <th class="text-center" style="width:10%">#</th>
+                    <th class="text-center" style="width:20%">設備編號</th>
+                    <th class="text-center" style="width:20%">借用狀態</th>
+                    <th style="width:50%">設備存放位置</th>
                 </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>無編號資料
+                        </td>
+                    </tr>
+                }
+                @{ var idx = 0; }
+                @foreach (var item in Model)
+                {
+                    idx++;
+                    <tr>
+                        <td class="text-center text-muted">@idx</td>
+                        <td class="text-center fw-semibold">@item.EId</td>
+                        <td class="text-center">
+                            @if (item.IsBorrow == "True")
+                            {
+                                <span class="status-badge badge-applying" style="background:rgba(230,126,34,0.12);color:#e67e22;font-size:.75rem;padding:3px 10px;border-radius:20px;">
+                                    <i class="bi bi-arrow-left-right"></i> 借用中
+                                </span>
+                            }
+                            else if (item.IsBorrow == "Missing")
+                            {
+                                <span class="status-badge" style="background:rgba(231,76,60,0.12);color:#e74c3c;font-size:.75rem;padding:3px 10px;border-radius:20px;">
+                                    <i class="bi bi-exclamation-triangle"></i> 遺失
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="status-badge badge-approved" style="background:rgba(39,174,96,0.12);color:#1a7a33;font-size:.75rem;padding:3px 10px;border-radius:20px;">
+                                    <i class="bi bi-check-circle-fill"></i> 可借用
+                                </span>
+                            }
+                        </td>
+                        <td><small>@item.ECurrent_Location</small></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
 
-            }
-        </tbody>
-    </table>
-
-    <form action="Browse_All_equipment" method="get">
-        <button type="submit" class="btn btn-secondary">返回</button>
-    </form>
+<div class="mt-3">
+    <a href="@Url.Action("Browse_All_equipment", "Manage_All_Equipment")" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>返回管理介面
+    </a>
 </div>

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using EquipmentBorrowingSystem.Data;
 using EquipmentBorrowingSystem.EMail;
-using EquipmentBorrowingSystem.Migrations;
 using EquipmentBorrowingSystem.Models;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace EquipmentBorrowingSystem.Controllers
@@ -30,116 +29,129 @@ namespace EquipmentBorrowingSystem.Controllers
 
 
 
+        // 建立設備摘要字典（每筆借用紀錄對應的設備名稱清單）
+        private Dictionary<string, List<string>> BuildEquipmentSummary(IEnumerable<Application_Completed> records)
+        {
+            var orderGuids = records.Select(r => r.fOrderGuid).ToList();
+            var allDetails = _context.Application_Details
+                .Where(d => orderGuids.Contains(d.fOrderGuid))
+                .ToList();
+            return allDetails
+                .GroupBy(d => d.fOrderGuid)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(d => d.Is_Consumable == "True"
+                        ? $"{d.EName} {d.Emodel} x{d.Consumable_Borrowing_Times}"
+                        : $"{d.EName} {d.Emodel} (#{d.EId})")
+                        .ToList()
+                );
+        }
+
         public IActionResult Select_Equipment_BorrowingRecords()
         {
-            string fUserId = User.Identity.Name;
-
-            var fUserId1 = _context.tMember
-.Where(m => m.fUserId == "Kao77")
-.FirstOrDefault(); //抓fUserId問題暫時無法解決，先用硬解替代
-
             var select_application_completed = _context.Application_Completed
-    .Where(m => m.Status == "Returned")
-    .OrderByDescending(m => m.Borrow_Time)
-    .ToList();
+                .Where(m => m.Status == "Returned")
+                .OrderByDescending(m => m.Borrow_Time)
+                .ToList();
             var ViewModel = new Select_Equipment_BorrowingRecordsViewModel
             {
-                Application_Completed = select_application_completed
-
+                Application_Completed = select_application_completed,
+                EquipmentSummary = BuildEquipmentSummary(select_application_completed)
             };
             return View(ViewModel);
-
         }
 
 
 
         [HttpPost]
-        public IActionResult Select_Equipment_BorrowingRecords(string IntputType, DateTime Date1, DateTime Date2, string Borrow_Name)
+        public IActionResult Select_Equipment_BorrowingRecords(string IntputType, DateTime Date1, DateTime Date2, string Borrow_Name, string Equipment_Keyword)
         {
-            string fUserId = User.Identity.Name;
+            List<Application_Completed> select_application_completed;
+            string Date1String = null;
+            string Date2String = null;
 
-            var fUserId1 = _context.tMember
-.Where(m => m.fUserId == "Kao77")
-.FirstOrDefault(); //抓fUserId問題暫時無法解決，先用硬解替代
-
-            // 在後端代碼中處理日期
-            DateTime date2 = Convert.ToDateTime(Request.Form["Date2"]);
-            date2 = date2.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
-
-            if (Borrow_Name == null)
+            // 設備名稱/型號查詢
+            if (IntputType == "Equipment" && !string.IsNullOrEmpty(Equipment_Keyword))
             {
-                if (IntputType == "ApplicationDate")
+                // 先從 Application_Details 找到包含該設備的 fOrderGuid
+                var matchingOrderGuids = _context.Application_Details
+                    .Where(d => d.EName.Contains(Equipment_Keyword) || d.Emodel.Contains(Equipment_Keyword) || d.EId.Contains(Equipment_Keyword))
+                    .Select(d => d.fOrderGuid)
+                    .Distinct()
+                    .ToList();
+
+                select_application_completed = _context.Application_Completed
+                    .Where(m => m.Status == "Returned" && matchingOrderGuids.Contains(m.fOrderGuid))
+                    .OrderByDescending(m => m.Borrow_Time)
+                    .ToList();
+
+                var ViewModel = new Select_Equipment_BorrowingRecordsViewModel
                 {
-                    var select_application_completed = _context.Application_Completed
-.Where(m => m.Status == "Returned" && m.Date_Of_Application >= Date1 && m.Date_Of_Application <= date2)
-.OrderByDescending(m => m.Borrow_Time)
-.ToList();
-                    string Date1String = Date1.ToString("yyyy-MM-dd"); // 這裡使用了 "yyyy-MM-dd" 格式字串
-                    string Date2String = Date2.ToString("yyyy-MM-dd"); // 這裡使用了 "yyyy-MM-dd" 格式字串
-                    var ViewModel = new Select_Equipment_BorrowingRecordsViewModel
-                    {
-                        Application_Completed = select_application_completed,
-                        IntputType = IntputType,
-                        Date1 = Date1String,
-                        Date2 = Date2String
-                    };
-
-                    return View(ViewModel);
-                }
-                else if (IntputType == "BorrowDate")
-                {
-                    var select_application_completed = _context.Application_Completed
-.Where(m => m.Status == "Returned" && m.Borrow_Time >= Date1 && m.Borrow_Time <= date2)
-.OrderByDescending(m => m.Borrow_Time)
-.ToList();
-                    string Date1String = Date1.ToString("yyyy-MM-dd"); // 這裡使用了 "yyyy-MM-dd" 格式字串
-                    string Date2String = Date2.ToString("yyyy-MM-dd"); // 這裡使用了 "yyyy-MM-dd" 格式字串
-                    var ViewModel = new Select_Equipment_BorrowingRecordsViewModel
-                    {
-                        Application_Completed = select_application_completed,
-                        IntputType = IntputType,
-                        Date1 = Date1String,
-                        Date2 = Date2String
-                    };
-
-                    return View(ViewModel);
-                }
-                else if (IntputType == "ReturnDate")
-                {
-                    var select_application_completed = _context.Application_Completed
-.Where(m => m.Status == "Returned" && m.Return_Time >= Date1 && m.Return_Time <= date2)
-.OrderByDescending(m => m.Borrow_Time)
-.ToList();
-                    string Date1String = Date1.ToString("yyyy-MM-dd"); // 這裡使用了 "yyyy-MM-dd" 格式字串
-                    string Date2String = Date2.ToString("yyyy-MM-dd"); // 這裡使用了 "yyyy-MM-dd" 格式字串
-                    var ViewModel = new Select_Equipment_BorrowingRecordsViewModel
-                    {
-                        Application_Completed = select_application_completed,
-                        IntputType = IntputType,
-                        Date1 = Date1String,
-                        Date2 = Date2String
-                    };
-
-                    return View(ViewModel);
-                }
-
+                    Application_Completed = select_application_completed,
+                    IntputType = IntputType,
+                    Equipment_Keyword = Equipment_Keyword,
+                    EquipmentSummary = BuildEquipmentSummary(select_application_completed)
+                };
+                return View(ViewModel);
             }
-            else
+
+            // 借用人查詢
+            if (!string.IsNullOrEmpty(Borrow_Name))
             {
-                var select_application_completed = _context.Application_Completed
-.Where(m => m.Name.Contains(Borrow_Name) && m.Status == "Returned")
-.OrderByDescending(m => m.Borrow_Time)
-.ToList();
+                select_application_completed = _context.Application_Completed
+                    .Where(m => m.Name.Contains(Borrow_Name) && m.Status == "Returned")
+                    .OrderByDescending(m => m.Borrow_Time)
+                    .ToList();
                 var ViewModel = new Select_Equipment_BorrowingRecordsViewModel
                 {
                     Application_Completed = select_application_completed,
                     IntputType = IntputType,
                     Borrow_Name = Borrow_Name,
+                    EquipmentSummary = BuildEquipmentSummary(select_application_completed)
                 };
-
                 return View(ViewModel);
             }
-            return View();
+
+            // 日期區間查詢
+            DateTime date2 = Date2.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+            Date1String = Date1.ToString("yyyy-MM-dd");
+            Date2String = Date2.ToString("yyyy-MM-dd");
+
+            if (IntputType == "ApplicationDate")
+            {
+                select_application_completed = _context.Application_Completed
+                    .Where(m => m.Status == "Returned" && m.Date_Of_Application >= Date1 && m.Date_Of_Application <= date2)
+                    .OrderByDescending(m => m.Borrow_Time)
+                    .ToList();
+            }
+            else if (IntputType == "BorrowDate")
+            {
+                select_application_completed = _context.Application_Completed
+                    .Where(m => m.Status == "Returned" && m.Borrow_Time >= Date1 && m.Borrow_Time <= date2)
+                    .OrderByDescending(m => m.Borrow_Time)
+                    .ToList();
+            }
+            else if (IntputType == "ReturnDate")
+            {
+                select_application_completed = _context.Application_Completed
+                    .Where(m => m.Status == "Returned" && m.Return_Time >= Date1 && m.Return_Time <= date2)
+                    .OrderByDescending(m => m.Borrow_Time)
+                    .ToList();
+            }
+            else
+            {
+                return RedirectToAction("Select_Equipment_BorrowingRecords");
+            }
+
+            var viewModel = new Select_Equipment_BorrowingRecordsViewModel
+            {
+                Application_Completed = select_application_completed,
+                IntputType = IntputType,
+                Date1 = Date1String,
+                Date2 = Date2String,
+                EquipmentSummary = BuildEquipmentSummary(select_application_completed)
+            };
+            return View(viewModel);
         }
 
 

@@ -272,6 +272,22 @@ namespace EquipmentBorrowingSystem.Controllers
                 .ToList();
    
 
+            // 建立設備圖片對照表 (key: "EName|Emodel|ESource", value: EImage)
+            var imageMap = new Dictionary<string, string>();
+            foreach (var d in application_details)
+            {
+                var key = d.EName + "|" + d.Emodel + "|" + d.ESource;
+                if (!imageMap.ContainsKey(key))
+                {
+                    var eq = _context.Equipment
+                        .Where(e => e.EName == d.EName && e.Emodel == d.Emodel && e.ESource == d.ESource)
+                        .Select(e => e.EImage)
+                        .FirstOrDefault();
+                    imageMap[key] = eq;
+                }
+            }
+            ViewBag.ImageMap = imageMap;
+
             return View(application_details);
         }
 
@@ -578,6 +594,48 @@ namespace EquipmentBorrowingSystem.Controllers
         }
 
 
+        //AJAX取得申請詳細資訊（供 Modal 彈跳視窗使用）
+        [HttpGet]
+        public IActionResult GetApplicationDetails(string fOrderGuid)
+        {
+            var application = _context.Application
+                .Where(m => m.fOrderGuid == fOrderGuid).FirstOrDefault();
+            var details = _context.Application_Details
+                .Where(m => m.fOrderGuid == fOrderGuid).ToList();
+
+            if (application == null) return NotFound();
+
+            var result = new
+            {
+                name = application.Name,
+                borrowTime = application.Borrow_Time.ToString("yyyy/MM/dd HH:mm"),
+                returnTime = application.Return_Time.Year >= 9999 ? "無期限" : application.Return_Time.ToString("yyyy/MM/dd HH:mm"),
+                illustrate = application.Illustrate,
+                mobile = application.Mobile,
+                email = application.fEmail,
+                equipment = details.Where(d => d.Is_Consumable == "False").Select(d => new
+                {
+                    eName = d.EName,
+                    emodel = d.Emodel,
+                    eId = d.EId,
+                    eSource = d.ESource,
+                    eImage = _context.Equipment
+                        .Where(e => e.EName == d.EName && e.Emodel == d.Emodel && e.ESource == d.ESource)
+                        .Select(e => e.EImage).FirstOrDefault()
+                }),
+                consumables = details.Where(d => d.Is_Consumable == "True").Select(d => new
+                {
+                    eName = d.EName,
+                    emodel = d.Emodel,
+                    quantity = d.Consumable_Borrowing_Times,
+                    eSource = d.ESource,
+                    eImage = _context.Equipment
+                        .Where(e => e.EName == d.EName && e.Emodel == d.Emodel && e.ESource == d.ESource)
+                        .Select(e => e.EImage).FirstOrDefault()
+                })
+            };
+            return Json(result);
+        }
 
 
 

@@ -1,121 +1,120 @@
 @model EquipmentBorrowingSystem.Models.Equipment
-
 @{
-    ViewData["Title"] = "Create";
-    var welcomeMessage = TempData["WelcomeMessage"] as string;
+    ViewData["Title"] = "新增設備";
     Layout = "~/Views/Shared/_Layout_Manager.cshtml";
 }
 
-<h1>新增設備</h1>
-<hr />
-<div class="row">
-    <div class="col-md-4 col-12">
+<div class="page-header">
+    <h4><i class="bi bi-plus-circle me-2" style="color:#5b9bd5;"></i>新增設備</h4>
+    <p class="page-subtitle">新增一筆設備資料至系統</p>
+</div>
+
+<div class="content-card mb-3">
+    <div class="content-card-header">
+        <h5><i class="bi bi-box-seam"></i> 設備基本資料</h5>
+    </div>
+    <div class="p-3">
         <form action="@Url.Action("Create", "Manage_All_Equipment")" method="post" enctype="multipart/form-data">
-            <div class="form-horizontal">
-
-                <div class="form-group">
-                    <b> <span class="control-label col-md-2" style="padding-top: 10px;">設備名稱：</span></b>
-                    <input type="text" id="EName" name="EName" required="required" autocomplete="off" />
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">設備名稱 <span class="text-danger">*</span></label>
+                    <input type="text" name="EName" class="form-control form-control-sm" required autocomplete="off" placeholder="例如：VR頭盔 (含手把)" />
                 </div>
-
-                <div class="form-group" style="padding-top: 10px;">
-                    <b><span class="control-label col-md-2">設備型號：</span></b>
-                    <input type="text" id="Emodel" name="Emodel" required="required" autocomplete="off" />
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small">設備型號 <span class="text-danger">*</span></label>
+                    <input type="text" name="Emodel" class="form-control form-control-sm" required autocomplete="off" placeholder="例如：Meta Quest 3" />
                 </div>
-
-                <div id="consumableFieldsYes" style="display:none;">
-                    <div class="form-group" style="padding-top: 10px;" id="inputContainerYes">
-                        <b><span class="control-label col-md-2">設備總數量：</span></b>
-                        <input type="number" id="EQuantityYes" name="EQuantityYes"  autocomplete="off" />
-                    </div>
-                    <div id="dynamicInputsContainerYes"></div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small">數量單位 <span class="text-danger">*</span></label>
+                    <input type="text" name="EQuantity_Unit" class="form-control form-control-sm" required autocomplete="off" placeholder="台、個、條..." />
                 </div>
-
-                <div id="consumableFieldsNo" style="display:none;">
-                    <div class="form-group" style="padding-top: 10px;" id="inputContainerNo">
-                        <b><span class="control-label col-md-2">設備總數量：</span></b>
-                        <input type="number" id="EQuantityNo" name="EQuantityNo"  autocomplete="off" />
-                    </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold small">設備來源 <span class="text-danger">*</span></label>
+                    <select name="ESource" class="form-select form-select-sm" required>
+                        <option value="">-- 請選擇 --</option>
+                        <option value="自購">自購</option>
+                        <option value="教育局">教育局</option>
+                    </select>
                 </div>
-
-                <script>
-                    window.onload = function () {
-                        var quantityInputYes = document.getElementById('EQuantityYes');
-                        var dynamicInputsContainerYes = document.getElementById('dynamicInputsContainerYes');
-
-                        quantityInputYes.addEventListener('change', function () {
-                            var quantity = parseInt(quantityInputYes.value);
-
-                            // 清空動態生成的欄位
-                            dynamicInputsContainerYes.innerHTML = '';
-
-                            var titleLabel = document.createElement('label');
-                            titleLabel.textContent = '請輸入設備編號:';
-                            dynamicInputsContainerYes.appendChild(titleLabel); // 添加標題
-                            dynamicInputsContainerYes.appendChild(document.createElement('br')); // 插入換行
-
-                            for (var i = 0; i < quantity; i++) {
-                                var input = document.createElement('input');
-                                input.type = 'text';
-                                input.name = 'EId[]'; // 使用陣列使每個輸入框的值都能夠被正確地提交
-                                input.placeholder = '設備編號 ' + (i + 1);
-                                dynamicInputsContainerYes.appendChild(input);
-                                dynamicInputsContainerYes.appendChild(document.createElement('br')); // 插入換行
-                            }
-                        });
-
-                        var consumableRadios = document.getElementsByName('Is_Consumable');
-                        var consumableFieldsYes = document.getElementById('consumableFieldsYes');
-                        var consumableFieldsNo = document.getElementById('consumableFieldsNo');
-
-                        for (var i = 0; i < consumableRadios.length; i++) {
-                            consumableRadios[i].addEventListener('change', function () {
-                                if (this.value === 'True') {
-                                    consumableFieldsYes.style.display = 'none';
-                                    consumableFieldsNo.style.display = 'block';
-                                } else {
-                                    consumableFieldsYes.style.display = 'block';
-                                    consumableFieldsNo.style.display = 'none';
-                                }
-                            });
-                        }
-                    };
-                </script>
-
-                <div class="form-group" style="padding-top: 10px;">
-                    <b><span class="control-label col-md-2">數量單位：</span></b>
-                    <input type="text" id="EQuantity_Unit" name="EQuantity_Unit" required="required" autocomplete="off" />
-                </div>
-
-                <div class="form-group" style="padding-top: 10px;">
-                    <b><span class="control-label col-md-2">設備來源：</span></b>
-                    <label><input type="radio" name="ESource" value="自購" required="required" autocomplete="off" /> 自購</label>
-                    <label><input type="radio" name="ESource" value="教育局" required="required" autocomplete="off" /> 教育局</label>
-                </div>
-
-                <div class="form-group" style="padding-top: 10px;">
-                    <b><span class="control-label col-md-2">設備存放位置：</span></b>
-                    <input type="text" id="ECurrent_Location" name="ECurrent_Location" required="required" autocomplete="off" />
-                </div>
-
-                <div class="form-group" style="padding-top: 10px;">
-                    <b><span class="control-label col-md-2">是否為消耗品：</span></b>
-                    <label><input type="radio" name="Is_Consumable" value="True" required="required" autocomplete="off" /> 是</label>
-                    <label><input type="radio" name="Is_Consumable" value="False" required="required" autocomplete="off" /> 否</label>
-                </div>
-
-                <div class="form-group" style="padding-top: 10px;">
-                    <b><span class="control-label col-md-2">上傳圖片：</span></b>
-                    <input type="file" id="FileInput" name="FileInput" accept="image/*" />
-                </div>
-
-                <div class="form-group" style="padding-top: 10px;">
-                    <div class="col-md-offset-2 col-md-10">
-                        <input type="submit" value="新增此設備" />
-                        <button type="button" onclick="window.history.back();">返回</button>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">是否為消耗品 <span class="text-danger">*</span></label>
+                    <div class="d-flex gap-3 mt-1">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="Is_Consumable" id="consumableNo" value="False" required onchange="toggleConsumable()">
+                            <label class="form-check-label small" for="consumableNo">否（一般設備）</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="Is_Consumable" id="consumableYes" value="True" onchange="toggleConsumable()">
+                            <label class="form-check-label small" for="consumableYes">是（消耗品）</label>
+                        </div>
                     </div>
                 </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">設備存放位置 <span class="text-danger">*</span></label>
+                    <input type="text" name="ECurrent_Location" class="form-control form-control-sm" required autocomplete="off" value="數位內容設計研究中心" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">設備圖片</label>
+                    <input type="file" name="FileInput" class="form-control form-control-sm" accept="image/*" />
+                </div>
+
+                @* 一般設備：輸入數量後動態產生編號欄位 *@
+                <div class="col-12" id="equipmentSection" style="display:none;">
+                    <hr class="my-2" />
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold small">設備總數量 <span class="text-danger">*</span></label>
+                            <input type="number" id="eqQtyInput" name="EQuantityYes" class="form-control form-control-sm" min="1" autocomplete="off" />
+                        </div>
+                        <div class="col-12" id="eidContainer"></div>
+                    </div>
+                </div>
+
+                @* 消耗品：只輸入數量 *@
+                <div class="col-md-3" id="consumableSection" style="display:none;">
+                    <label class="form-label fw-semibold small">數量 <span class="text-danger">*</span></label>
+                    <input type="number" name="EQuantityNo" class="form-control form-control-sm" min="1" autocomplete="off" />
+                </div>
+            </div>
+
+            <hr class="my-3" />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success px-4">
+                    <i class="bi bi-check-circle me-1"></i>新增設備
+                </button>
+                <a href="@Url.Action("Browse_All_equipment", "Manage_All_Equipment")" class="btn btn-outline-secondary px-4">
+                    <i class="bi bi-arrow-left me-1"></i>返回
+                </a>
             </div>
         </form>
     </div>
 </div>
+
+@section Scripts {
+<script>
+    function toggleConsumable() {
+        var isConsumable = document.getElementById('consumableYes').checked;
+        document.getElementById('equipmentSection').style.display = isConsumable ? 'none' : '';
+        document.getElementById('consumableSection').style.display = isConsumable ? '' : 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var qtyInput = document.getElementById('eqQtyInput');
+        qtyInput.addEventListener('change', function () {
+            var qty = parseInt(this.value) || 0;
+            var container = document.getElementById('eidContainer');
+            if (qty <= 0) { container.innerHTML = ''; return; }
+
+            var html = '<label class="form-label fw-semibold small">請輸入每台設備的編號</label><div class="row g-2">';
+            for (var i = 0; i < qty; i++) {
+                html += '<div class="col-md-3 col-6"><div class="input-group input-group-sm">'
+                    + '<span class="input-group-text" style="font-size:.75rem;">#' + (i + 1) + '</span>'
+                    + '<input type="text" name="EId[]" class="form-control form-control-sm" placeholder="編號" autocomplete="off" />'
+                    + '</div></div>';
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        });
+    });
+</script>
+}

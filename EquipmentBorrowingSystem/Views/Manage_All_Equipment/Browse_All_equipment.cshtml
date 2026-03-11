@@ -1,199 +1,376 @@
 @model EquipmentBorrowingSystem.ViewModel.Browse_equipment1ViewModel
 @{
-    ViewData["Title"] = "瀏覽所有設備";
+    ViewData["Title"] = "管理所有設備";
     Layout = "~/Views/Shared/_Layout_Manager.cshtml";
-    var application_equipment_count = 0;
-    foreach (var item in Model.Equipment)
-    {
-        if (item.ERemaining_Quantity != "0")
-        {
-            application_equipment_count++;
-        }
 
-    }
+    var totalCount = Model.Equipment.Count();
+    var availableCount = Model.Equipment.Count(e => e.ERemaining_Quantity != "0");
+    var borrowingCount = Model.Equipment.Sum(e => int.TryParse(e.EBorrowing_Quantity, out var v) ? v : 0);
+    var missingCount = Model.Equipment.Sum(e => int.TryParse(e.EMissing_quantity, out var v) ? v : 0);
+
+    bool isSearchResult = !string.IsNullOrEmpty(Model.keyword) || (Model.select != null && Model.select != "全部設備");
 }
-<style>
-    /* 標題列樣式 */
-    .title-bar {
-        background-color: #90caf9; /* 標題列背景色 */
-        color: #424242; /* 文字顏色 */
-        padding: 10px; /* 內邊距 */
-        border-radius: 4px; /* 圓角 */
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* 陰影 */
-        margin-bottom: 20px; /* 底部外邊距 */
-    }
 
-    .table {
-        width: 70%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-    }
-
-        .table th {
-            border: 2px solid #333;
-            padding: 8px;
-            text-align: left;
-        }
-
-        .table td {
-            border: 1px solid #333;
-            padding: 8px;
-            text-align: left;
-        }
-
-        .table th {
-            background-color: #f2f2f2;
-        }
-
-    .table-cell-centered {
-        vertical-align: middle;
-        text-align: center;
-    }
-
-    .table-cell-centered1 {
-        vertical-align: middle;
-    }
-    /* 按鈕悬停時的樣式 */
-    button[type="submit"]:hover {
-        background-color: #45a049; /* 悬停時背景色 */
-    }
-
-    .search-header {
-        background-color: #f0f0f0; /* 背景颜色 */
-        padding: 8px 16px; /* 内边距 */
-        border-radius: 5px; /* 圆角边框 */
-        border: 1px solid #666; /* 深灰色边框 */
-        margin: 0 auto 10px; /* 居中并设置底部边距 */
-
-        text-align: center; /* 文字居中 */
-        display: inline-block; /* 行内块元素 */
-        white-space: nowrap; /* 防止换行 */
-    }
-</style>
-
-@* <tr>
-    <td>
-        <form action="@Url.Action("Browse_equipment1", "BorrowEquipment1")" method="post">
-            <h4><strong>選取要查詢的器材或設備</strong></h4>
-            <select name="select">
-                <option name="select" value="查詢全部">查詢全部</option>
-                <option name="select" value="頭盔">頭盔</option>
-                <option name="select" value="平板">平板</option>
-                <option name="select" value="筆電">筆電</option>
-                <option name="select" value="其他">其他</option>
-            </select>
-            <button type="submit" name="addButton" value="add" style="margin-left: 10px;">查詢</button>
-        </form>
-    </td>
-</tr> *@
-<div class="title-bar">
-    <h3><strong>器材與設備管理</strong></h3>
+<div class="page-header">
+    <h4><i class="bi bi-tools me-2" style="color:#5b9bd5;"></i>管理所有設備</h4>
+    <p class="page-subtitle">查看、新增、修改及刪除所有設備資料</p>
 </div>
-<table style="border-collapse: collapse; width: 100%; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px;">
-    <tr>
-        <td style="border-right: 1px solid #ccc; padding: 20px; text-align: center;">
-            <h4 style="margin-bottom: 20px; font-weight: bold; color: #333;">輸入要查詢的設備名稱或設備編號</h4>
-            <form action="@Url.Action("Browse_All_equipment", "Manage_All_Equipment")" method="post">
-                <input type="text" name="keyword" placeholder="請輸入關鍵字" required="required" autocomplete="off" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 10px;">
-                <button type="submit" name="searchButton" style="padding: 10px 20px; background-color: #45a049; color: #fff; border: none; border-radius: 4px; cursor: pointer;">查詢</button>
-            </form>
-        </td>
-        <td style="padding: 20px; text-align: center;">
-            <h4 style="margin-bottom: 20px; font-weight: bold; color: #333;">選取要查詢的器材或設備</h4>
-            <form action="@Url.Action("Browse_All_equipment", "Manage_All_Equipment")" method="post">
-                <select name="select" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 10px;">
-                    <option value="查詢全部">查詢全部</option>
-                    <option value="頭盔">頭盔</option>
-                    <option value="平板">平板</option>
-                    <option value="筆電">筆電</option>
-                    <option value="麥克風">麥克風</option>
-                    <option value="傳輸線">傳輸線</option>
-                    <option value="轉接線">轉接線</option>
-                    <option value="其他">其他</option>
-                </select>
-                <button type="submit" name="addButton" style="padding: 10px 20px; background-color: #45a049; color: #fff; border: none; border-radius: 4px; cursor: pointer;">查詢</button>
-            </form>
-        </td>
-    </tr>
-</table>
-<hr />
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-    <div>
-        @if (Model.keyword != null && Model.select == null)
-        {
-            <h4 class="search-header">搜尋關鍵字: @Model.keyword，共 @application_equipment_count 筆資料</h4>
-        }
-        else if (Model.keyword == null && Model.select != null && Model.select != "全部設備")
-        {
-            <h4 class="search-header">搜尋: @Model.select，共 @application_equipment_count 筆資料</h4>
-        }
-        else if (Model.select == "全部設備")
-        {
-            <h4 class="search-header">@Model.select，共 @application_equipment_count 筆資料</h4>
-        }
-    </div>
-    <div>
-        <button onclick="event.preventDefault(); window.location.href='@Url.Action("Create", "Manage_All_Equipment")'" style="width: 125px; height: 30px; font-size: 16px;">新增設備</button>
+@* ===== Search Box ===== *@
+<div class="search-box mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-auto">
+            <form action="@Url.Action("Browse_All_equipment", "Manage_All_Equipment")" method="post">
+                <label class="form-label fw-semibold small mb-1">關鍵字搜尋</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" name="keyword" placeholder="設備名稱、型號..." autocomplete="off"
+                           class="form-control" style="min-width:180px;" value="@Model.keyword" />
+                    <button type="submit" class="btn btn-accent">
+                        <i class="bi bi-search"></i> 查詢
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="col-12 col-md-auto">
+            <form action="@Url.Action("Browse_All_equipment", "Manage_All_Equipment")" method="post">
+                <label class="form-label fw-semibold small mb-1">設備分類</label>
+                <div class="input-group input-group-sm">
+                    @{
+                        var categories = new[] { "頭盔", "平板", "筆電", "麥克風", "傳輸線", "轉接線", "其他" };
+                    }
+                    <select name="select" class="form-select" style="min-width:130px;">
+                        <option value="查詢全部">全部</option>
+                        @foreach (var cat in categories)
+                        {
+                            if (Model.select == cat)
+                            {
+                                <option value="@cat" selected>@cat</option>
+                            }
+                            else
+                            {
+                                <option value="@cat">@cat</option>
+                            }
+                        }
+                    </select>
+                    <button type="submit" class="btn btn-accent">
+                        <i class="bi bi-funnel"></i> 篩選
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="col-12 col-md-auto">
+            <label class="form-label fw-semibold small mb-1 d-block">&nbsp;</label>
+            <a href="@Url.Action("Browse_All_equipment", "Manage_All_Equipment")" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-clockwise me-1"></i>全部顯示
+            </a>
+        </div>
+        <div class="col-12 col-md-auto ms-md-auto">
+            <label class="form-label fw-semibold small mb-1 d-block">&nbsp;</label>
+            <a href="@Url.Action("Create", "Manage_All_Equipment")" class="btn btn-sm btn-success">
+                <i class="bi bi-plus-lg me-1"></i>新增設備
+            </a>
+        </div>
     </div>
 </div>
-<table class="table table-bordered table-striped" style="width: 100%; border-collapse: collapse;">
 
+@* ===== Search Result Info ===== *@
+@if (isSearchResult)
+{
+    <div class="alert alert-light border d-flex align-items-center gap-2 py-2 mb-3">
+        <i class="bi bi-info-circle text-primary"></i>
+        <small>
+            @if (!string.IsNullOrEmpty(Model.keyword))
+            {
+                <span>關鍵字「@Model.keyword」，共 <strong>@totalCount</strong> 筆</span>
+            }
+            else
+            {
+                <span>分類「@Model.select」，共 <strong>@totalCount</strong> 筆</span>
+            }
+        </small>
+    </div>
+}
 
-    <thead>
+@* ===== Stat Cards ===== *@
+@if (!isSearchResult)
+{
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3">
+            <div class="stat-card stat-primary">
+                <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+                <div>
+                    <div class="stat-number">@totalCount</div>
+                    <div class="stat-label">設備種類總數</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="stat-card" style="border-left:4px solid #27ae60;">
+                <div class="stat-icon" style="color:#27ae60;"><i class="bi bi-check-circle"></i></div>
+                <div>
+                    <div class="stat-number">@availableCount</div>
+                    <div class="stat-label">可借用設備</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="stat-card" style="border-left:4px solid #e67e22;">
+                <div class="stat-icon" style="color:#e67e22;"><i class="bi bi-arrow-left-right"></i></div>
+                <div>
+                    <div class="stat-number">@borrowingCount</div>
+                    <div class="stat-label">借用中數量</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="stat-card" style="border-left:4px solid #e74c3c;">
+                <div class="stat-icon" style="color:#e74c3c;"><i class="bi bi-exclamation-triangle"></i></div>
+                <div>
+                    <div class="stat-number">@missingCount</div>
+                    <div class="stat-label">遺失數量</div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
-        <tr>
-            <th style="width: 30%; font-weight: bold; font-size: 20px;" class="table-cell-centered1">設備名稱</th>
-            <th style="width: 17%; font-weight: bold; font-size: 20px;" class="table-cell-centered1">設備型號</th>
-            <th style="width: 10%; font-weight: bold; font-size: 20px;" class="table-cell-centered">設備總數量</th>
-            <th style="width: 13%; font-weight: bold; font-size: 20px;" class="table-cell-centered">目前借用中數量</th>
-            <th style="width: 8%; font-weight: bold; font-size: 20px;" class="table-cell-centered">剩餘數量</th>
-            <th style="width: 8%; font-weight: bold; font-size: 20px;" class="table-cell-centered">遺失數量</th>
-            <th style="width: 14%;"></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Equipment)
-        {
-            <tr>
+@* ===== Main Table ===== *@
+<div class="content-card">
+    <div class="content-card-header">
+        <h5><i class="bi bi-tools"></i> 設備列表</h5>
+        <span class="badge" style="background:rgba(91,155,213,0.15);color:#2d6fa3;font-weight:600;">
+            共 @totalCount 筆
+        </span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover table-custom mb-0">
+            <thead>
+                <tr>
+                    <th style="width:4%">#</th>
+                    <th style="width:22%">設備名稱</th>
+                    <th style="width:14%">型號</th>
+                    <th style="width:7%">來源</th>
+                    <th style="width:6%">類型</th>
+                    <th style="width:7%">總數量</th>
+                    <th style="width:8%">借用中</th>
+                    <th style="width:7%">剩餘</th>
+                    <th style="width:7%">遺失</th>
+                    <th style="width:18%">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Equipment.Any())
+                {
+                    <tr>
+                        <td colspan="10" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>找不到符合的設備
+                        </td>
+                    </tr>
+                }
+                @{ var rowNum = 0; }
+                @foreach (var item in Model.Equipment)
+                {
+                    rowNum++;
+                    var borrowQty = int.TryParse(item.EBorrowing_Quantity, out var bq) ? bq : 0;
+                    var missingQty = int.TryParse(item.EMissing_quantity, out var mq) ? mq : 0;
+                    var remainQty = int.TryParse(item.ERemaining_Quantity, out var rq) ? rq : 0;
+                    <tr>
+                        <td class="text-center text-muted">@rowNum</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                @if (!string.IsNullOrWhiteSpace(item.EImage) && item.EImage.Trim() != " " && item.EImage.Trim() != "")
+                                {
+                                    <img src="~/Image/@item.EImage" alt="" class="rounded"
+                                         style="width:32px; height:32px; object-fit:cover; cursor:pointer; border:1px solid #e9ecef;"
+                                         onclick="showEqImage('@Html.Raw(item.EImage.Replace("'", "\\'"))', '@Html.Raw(item.EName.Replace("'", "\\'")) @Html.Raw(item.Emodel.Replace("'", "\\'"))')"
+                                         title="點擊放大" />
+                                }
+                                else
+                                {
+                                    <span class="d-inline-flex align-items-center justify-content-center rounded"
+                                          style="width:32px; height:32px; background:#f0f0f0; color:#ccc; font-size:.8rem; border:1px solid #e9ecef;"
+                                          title="無圖片">
+                                        <i class="bi bi-image"></i>
+                                    </span>
+                                }
+                                <span class="fw-semibold">@item.EName</span>
+                            </div>
+                        </td>
+                        <td>@item.Emodel</td>
+                        <td>
+                            <span class="badge @(item.ESource == "自購" ? "bg-info text-dark" : "bg-secondary")" style="font-size:.72rem;">
+                                @item.ESource
+                            </span>
+                        </td>
+                        <td>
+                            @if (item.Is_Consumable == "True")
+                            {
+                                <span class="badge bg-warning text-dark" style="font-size:.72rem;">消耗品</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-dark border" style="font-size:.72rem;">設備</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            <strong>@item.EQuantity</strong> <small class="text-muted">@item.EQuantity_Unit</small>
+                        </td>
+                        <td class="text-center">
+                            @if (borrowQty > 0)
+                            {
+                                <span class="text-warning fw-semibold">@item.EBorrowing_Quantity</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">0</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @if (remainQty > 0)
+                            {
+                                <span class="text-success fw-semibold">@item.ERemaining_Quantity</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger fw-semibold">0</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @if (missingQty > 0)
+                            {
+                                <span class="text-danger fw-semibold">@item.EMissing_quantity</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">0</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                @if (item.Is_Consumable != "True")
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;"
+                                            onclick="showEIdModal('@item.EName', '@item.Emodel', '@item.ESource')">
+                                        <i class="bi bi-list-ol me-1"></i>編號
+                                    </button>
+                                }
+                                <form action="@Url.Action("Update", "Manage_All_Equipment")" method="post" class="d-inline">
+                                    <input type="hidden" name="EName" value="@item.EName" />
+                                    <input type="hidden" name="Emodel" value="@item.Emodel" />
+                                    <input type="hidden" name="ESource" value="@item.ESource" />
+                                    <input type="hidden" name="Is_Consumable" value="@item.Is_Consumable" />
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" style="font-size:.75rem;">
+                                        <i class="bi bi-pencil me-1"></i>修改
+                                    </button>
+                                </form>
+                                <form action="@Url.Action("Delete", "Manage_All_Equipment")" method="post" class="d-inline">
+                                    <input type="hidden" name="EName" value="@item.EName" />
+                                    <input type="hidden" name="Emodel" value="@item.Emodel" />
+                                    <input type="hidden" name="ESource" value="@item.ESource" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size:.75rem;"
+                                            onclick="return confirm('確定要刪除「@item.EName (@item.Emodel)」及所有編號嗎？此操作無法復原。')">
+                                        <i class="bi bi-trash me-1"></i>刪除
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
 
+@* ===== 設備圖片預覽 Modal ===== *@
+<div class="modal fade" id="eqImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header py-2" style="background:#f0f4f8; border-bottom:1px solid #e9ecef;">
+                <h6 class="modal-title fw-bold" style="font-size:.85rem;" id="eqImageTitle">設備圖片</h6>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-3">
+                <img id="eqImagePreview" src="" alt="設備圖片" style="max-width:100%; max-height:400px; border-radius:8px; object-fit:contain;" />
+                <div id="eqImageNone" class="py-4 text-muted" style="display:none;">
+                    <i class="bi bi-image fs-1 d-block mb-2" style="opacity:.3;"></i>
+                    <small>此設備尚未上傳圖片</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                <td style="width: 30%; font-size: 18px;" class=" table-cell-centered1">@Html.DisplayFor(modelItem => item.EName) (@Html.DisplayFor(modelItem => item.ESource))</td>
-                <td style="width: 17%; font-size: 18px;" class="table-cell-centered1">@Html.DisplayFor(modelItem => item.Emodel)</td>
-                <td style="width: 10%; font-size: 18px;" class="table-cell-centered">@Html.DisplayFor(modelItem => item.EQuantity) @Html.DisplayFor(modelItem => item.EQuantity_Unit)</td>
-                <td style="width: 13%; font-size: 18px;" class=" table-cell-centered">@Html.DisplayFor(modelItem => item.EBorrowing_Quantity) @Html.DisplayFor(modelItem => item.EQuantity_Unit)</td>
-                <td style="width: 8%; font-size: 18px;" class="table-cell-centered">@Html.DisplayFor(modelItem => item.ERemaining_Quantity) @Html.DisplayFor(modelItem => item.EQuantity_Unit)</td>
-                <td style="width: 8%; font-size: 18px;" class="table-cell-centered">@Html.DisplayFor(modelItem => item.EMissing_quantity) @Html.DisplayFor(modelItem => item.EQuantity_Unit)</td>
-                <td style="width: 14%; " class="table-cell-centered">
-                    <form action="@Url.Action("Browse_Equipment_EId", "Manage_All_Equipment")" method="post" style="margin-bottom: 10px;">
-                        <input type="hidden" name="EName" value="@item.EName" /> <!-- 添加隐藏字段传递 item.EName 的值 -->
-                        <input type="hidden" name="Emodel" value="@item.Emodel" /> <!-- 添加隐藏字段传递 item.Emodel 的值 -->
-                        <input type="hidden" name="ESource" value="@item.ESource" /> <!-- 添加隐藏字段传递 item.ESource 的值 -->
-                        <button type="submit" name="addButton" value="add">查看此設備編號</button>
-                    </form>
-                    <form action="@Url.Action("Delete", "Manage_All_Equipment")" method="post" style="margin-bottom: 10px;">
-                        <input type="hidden" name="EName" value="@item.EName" /> <!-- 添加隐藏字段传递 item.EName 的值 -->
-                        <input type="hidden" name="Emodel" value="@item.Emodel" /> <!-- 添加隐藏字段传递 item.Emodel 的值 -->
-                        <input type="hidden" name="ESource" value="@item.ESource" /> <!-- 添加隐藏字段传递 item.ESource 的值 -->
-                        <button type="submit" onclick="return confirm('您確定要刪除此設備及編號嗎?')">刪除此設備及編號</button>
+@* ===== EId Modal ===== *@
+<div class="modal fade" id="eidModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header py-2" style="background:#f0f4f8; border-bottom:1px solid #e9ecef;">
+                <h6 class="modal-title fw-bold" id="eidModalTitle">設備編號</h6>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3" id="eidModalBody">
+                <div class="text-center py-4 text-muted">
+                    <div class="spinner-border spinner-border-sm me-1"></div> 載入中...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                    </form>
-                    <form action="@Url.Action("Update", "Manage_All_Equipment")" method="post">
-                        <input type="hidden" name="EName" value="@item.EName" /> <!-- 添加隐藏字段传递 item.EName 的值 -->
-                        <input type="hidden" name="Emodel" value="@item.Emodel" /> <!-- 添加隐藏字段传递 item.Emodel 的值 -->
-                        <input type="hidden" name="ESource" value="@item.ESource" /> <!-- 添加隐藏字段传递 item.ESource 的值 -->
-                        <input type="hidden" name="Is_Consumable" value="@item.Is_Consumable" /> <!-- 添加隐藏字段传递 item.ESource 的值 -->
-                        <button type="submit">修改此設備及編號</button>
+@section Scripts {
+<script>
+    function showEIdModal(eName, emodel, eSource) {
+        var modal = new bootstrap.Modal(document.getElementById('eidModal'));
+        document.getElementById('eidModalTitle').textContent = eName + ' | ' + emodel;
+        document.getElementById('eidModalBody').innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-1"></div> 載入中...</div>';
+        modal.show();
 
-                    </form>
-                </td>
+        fetch('@Url.Action("GetEquipmentEIds", "Manage_All_Equipment")?eName=' + encodeURIComponent(eName)
+            + '&emodel=' + encodeURIComponent(emodel)
+            + '&eSource=' + encodeURIComponent(eSource))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || data.length === 0) {
+                    document.getElementById('eidModalBody').innerHTML = '<div class="text-center py-3 text-muted"><i class="bi bi-inbox d-block mb-1" style="font-size:1.3rem;"></i>無編號資料</div>';
+                    return;
+                }
+                var html = '<div class="table-responsive"><table class="table table-sm table-hover mb-0" style="font-size:.82rem;">';
+                html += '<thead style="background:#f0f4f8;"><tr><th class="text-center" style="width:25%">編號</th><th class="text-center" style="width:25%">狀態</th><th style="width:50%">存放位置</th></tr></thead><tbody>';
+                data.forEach(function (item) {
+                    var badge = '';
+                    if (item.isBorrow === 'True') badge = '<span class="badge bg-warning text-dark">借用中</span>';
+                    else if (item.isBorrow === 'Missing') badge = '<span class="badge bg-danger">遺失</span>';
+                    else badge = '<span class="badge bg-success">可借用</span>';
+                    html += '<tr><td class="text-center fw-semibold">' + escHtml(item.eId) + '</td><td class="text-center">' + badge + '</td><td><small>' + escHtml(item.eCurrent_Location) + '</small></td></tr>';
+                });
+                html += '</tbody></table></div>';
+                document.getElementById('eidModalBody').innerHTML = html;
+            })
+            .catch(function () {
+                document.getElementById('eidModalBody').innerHTML = '<div class="text-center text-danger py-3">載入失敗</div>';
+            });
+    }
 
-
-
-
-
-
-            </tr>
+    function showEqImage(imageName, title) {
+        var imgEl = document.getElementById('eqImagePreview');
+        var noneEl = document.getElementById('eqImageNone');
+        document.getElementById('eqImageTitle').textContent = title || '設備圖片';
+        if (imageName && imageName.trim() && imageName.trim() !== ' ') {
+            imgEl.src = '/Image/' + encodeURIComponent(imageName.trim());
+            imgEl.style.display = 'block';
+            noneEl.style.display = 'none';
+        } else {
+            imgEl.style.display = 'none';
+            noneEl.style.display = 'block';
         }
-    </tbody>
-</table>
+        new bootstrap.Modal(document.getElementById('eqImageModal')).show();
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(str));
+        return d.innerHTML;
+    }
+</script>
+}

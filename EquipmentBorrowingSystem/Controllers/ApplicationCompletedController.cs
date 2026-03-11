@@ -290,6 +290,46 @@ namespace EquipmentBorrowingSystem.Controllers
 
 
 
+        //查詢所有待審核的申請//查詢所有待審核的申請//查詢所有待審核的申請
+        public ActionResult PendingApplications()
+        {
+            var pendingApplications = _context.Application
+                .Where(m => m.Status == "Applying")
+                .OrderByDescending(m => m.Date_Of_Application)
+                .ToList();
+            return View(pendingApplications);
+        }
+
+        //接受申請頁面（管理者審核）//接受申請頁面（管理者審核）//接受申請頁面（管理者審核）
+        public ActionResult AcceptApplication(string fOrderGuid)
+        {
+            var select_application = _context.Application
+                .Where(m => m.fOrderGuid == fOrderGuid).FirstOrDefault();
+            if (select_application == null)
+            {
+                return RedirectToAction("PendingApplications");
+            }
+            return View(select_application);
+        }
+
+        //拒絕（取消）申請//拒絕（取消）申請//拒絕（取消）申請
+        [HttpPost]
+        public ActionResult RejectApplication(string fOrderGuid)
+        {
+            var application = _context.Application
+                .Where(m => m.fOrderGuid == fOrderGuid).FirstOrDefault();
+            var application_details = _context.Application_Details
+                .Where(m => m.fOrderGuid == fOrderGuid).ToList();
+
+            if (application != null)
+            {
+                _context.Application.Remove(application);
+                _context.Application_Details.RemoveRange(application_details);
+                _context.SaveChanges();
+            }
+            return RedirectToAction("PendingApplications");
+        }
+
         //查詢已申請成功的借用設備詳細資訊//查詢已申請成功的借用設備詳細資訊//查詢已申請成功的借用設備詳細資訊
         public ActionResult Select_ApplicationCompleted_List(string fOrderGuid)
         {
@@ -313,8 +353,280 @@ namespace EquipmentBorrowingSystem.Controllers
         }
 
 
+        //AJAX取得申請詳細資訊（供 Modal 彈跳視窗使用）
+        [HttpGet]
+        public IActionResult GetApplicationDetails(string fOrderGuid)
+        {
+            // 先從 Application 查，查不到再從 Application_Completed 查（已歸還的紀錄）
+            var application = _context.Application
+                .Where(m => m.fOrderGuid == fOrderGuid).FirstOrDefault();
+            var completed = _context.Application_Completed
+                .Where(m => m.fOrderGuid == fOrderGuid).FirstOrDefault();
+            var details = _context.Application_Details
+                .Where(m => m.fOrderGuid == fOrderGuid).ToList();
+
+            string name, borrowTime, returnTime, illustrate, mobile, email;
+            if (application != null)
+            {
+                name = application.Name;
+                borrowTime = application.Borrow_Time.ToString("yyyy/MM/dd HH:mm");
+                returnTime = application.Return_Time.Year >= 9999 ? "無期限" : application.Return_Time.ToString("yyyy/MM/dd HH:mm");
+                illustrate = application.Illustrate;
+                mobile = application.Mobile;
+                email = application.fEmail;
+            }
+            else if (completed != null)
+            {
+                name = completed.Name;
+                borrowTime = completed.Borrow_Time.ToString("yyyy/MM/dd HH:mm");
+                returnTime = completed.Return_Time.Year >= 9999 ? "無期限" : completed.Return_Time.ToString("yyyy/MM/dd HH:mm");
+                illustrate = completed.Illustrate;
+                mobile = completed.Mobile;
+                email = completed.fEmail;
+            }
+            else
+            {
+                return NotFound();
+            }
+
+            var result = new
+            {
+                name,
+                borrowTime,
+                returnTime,
+                illustrate,
+                mobile,
+                email,
+                credentialsMortgage = completed?.Credentials_Mortgage,
+                handoverPerson = completed?.Equipment_Handover_Person,
+                receivePerson = completed?.Equipment_Recive_Person,
+                status = completed?.Status ?? application?.Status,
+                equipment = details.Where(d => d.Is_Consumable == "False").Select(d => new
+                {
+                    eName = d.EName,
+                    emodel = d.Emodel,
+                    eId = d.EId,
+                    eSource = d.ESource,
+                    eImage = _context.Equipment
+                        .Where(e => e.EName == d.EName && e.Emodel == d.Emodel && e.ESource == d.ESource)
+                        .Select(e => e.EImage).FirstOrDefault()
+                }),
+                consumables = details.Where(d => d.Is_Consumable == "True").Select(d => new
+                {
+                    eName = d.EName,
+                    emodel = d.Emodel,
+                    quantity = d.Consumable_Borrowing_Times,
+                    eSource = d.ESource,
+                    eImage = _context.Equipment
+                        .Where(e => e.EName == d.EName && e.Emodel == d.Emodel && e.ESource == d.ESource)
+                        .Select(e => e.EImage).FirstOrDefault()
+                })
+            };
+            return Json(result);
+        }
 
 
+        // ==================== 快速新增借用紀錄 ====================
+
+        //快速新增借用紀錄頁面
+        public IActionResult QuickAddRecord()
+        {
+            return View();
+        }
+
+        //AJAX: 取得所有可用設備（非消耗品，有剩餘數量）
+        [HttpGet]
+        public IActionResult GetAvailableEquipment()
+        {
+            var equipment = _context.Equipment
+                .Where(e => e.Is_Consumable == "False")
+                .OrderBy(e => e.EName).ThenBy(e => e.Emodel).ThenBy(e => e.ESource)
+                .Select(e => new { e.EName, e.Emodel, e.ESource, e.ERemaining_Quantity })
+                .ToList();
+            return Json(equipment);
+        }
+
+        //AJAX: 根據設備名稱+型號+來源，取得可借用的編號清單
+        [HttpGet]
+        public IActionResult GetAvailableEIds(string eName, string emodel, string eSource)
+        {
+            var ids = _context.Equipment_Details
+                .Where(d => d.EName == eName && d.Emodel == emodel && d.ESource == eSource
+                    && d.IsBorrow == "False" && d.IsAddEquipment == "False")
+                .OrderBy(d => d.EId)
+                .Select(d => d.EId)
+                .ToList();
+            return Json(ids);
+        }
+
+        //AJAX: 取得所有消耗品
+        [HttpGet]
+        public IActionResult GetAvailableConsumables()
+        {
+            var consumables = _context.Equipment
+                .Where(e => e.Is_Consumable == "True")
+                .OrderBy(e => e.EName).ThenBy(e => e.Emodel)
+                .Select(e => new { e.EName, e.Emodel, e.ESource, e.ERemaining_Quantity })
+                .ToList();
+            return Json(consumables);
+        }
+
+        //POST: 快速新增借用紀錄（直接建立 Application + Application_Completed + Application_Details）
+        [HttpPost]
+        public IActionResult SubmitQuickAdd([FromBody] QuickAddRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Equipment_Handover_Person))
+                return BadRequest(new { message = "借用人姓名和移交人為必填" });
+            if ((request.EquipmentItems == null || !request.EquipmentItems.Any()) && (request.ConsumableItems == null || !request.ConsumableItems.Any()))
+                return BadRequest(new { message = "請至少選擇一項設備或消耗品" });
+
+            string guid = Guid.NewGuid().ToString();
+
+            // 建立 Application 主檔
+            var application = new Models.Application
+            {
+                Date_Of_Application = new DateTime(2000, 10, 10), // 管理者申請標記
+                fOrderGuid = guid,
+                fUserId = "Manager",
+                Name = request.Name,
+                Borrow_Time = request.Borrow_Time,
+                Return_Time = request.Return_Time,
+                Mobile = request.Mobile ?? "無",
+                fEmail = request.fEmail ?? "無",
+                Illustrate = request.Illustrate ?? "",
+                Status = "True" // 直接通過
+            };
+            _context.Application.Add(application);
+
+            // 建立 Application_Completed
+            var completed = new Models.Application_Completed
+            {
+                fOrderGuid = guid,
+                fUserId = "Manager",
+                Date_Of_Application = new DateTime(2000, 10, 10),
+                Name = request.Name,
+                Borrow_Time = request.Borrow_Time,
+                Return_Time = request.Return_Time,
+                Mobile = request.Mobile ?? "無",
+                fEmail = request.fEmail ?? "無",
+                Illustrate = request.Illustrate ?? "",
+                Status = request.Borrow_Time <= DateTime.Now ? "Borrowing" : "Not_borrowed_yet",
+                Credentials_Mortgage = request.Credentials_Mortgage ?? "身分免押",
+                Equipment_Handover_Person = request.Equipment_Handover_Person,
+                Equipment_Recive_Person = " ",
+                IsSendEmail = "False"
+            };
+            _context.Application_Completed.Add(completed);
+
+            // 建立 Application_Details（一般設備）
+            if (request.EquipmentItems != null)
+            {
+                foreach (var item in request.EquipmentItems)
+                {
+                    _context.Application_Details.Add(new Application_Details
+                    {
+                        fOrderGuid = guid,
+                        fUserId = "Manager",
+                        EName = item.EName,
+                        Emodel = item.Emodel,
+                        EId = item.EId,
+                        ESource = item.ESource,
+                        fIsApplied = "是",
+                        IsCount_Borrowing_Times = "否",
+                        Consumable_Borrowing_Times = "1",
+                        Is_Consumable = "False"
+                    });
+
+                    // 如果借用時間已到，立即更新設備狀態
+                    if (request.Borrow_Time <= DateTime.Now)
+                    {
+                        var detail = _context.Equipment_Details
+                            .FirstOrDefault(d => d.EName == item.EName && d.Emodel == item.Emodel && d.EId == item.EId && d.ESource == item.ESource);
+                        if (detail != null)
+                        {
+                            detail.IsBorrow = "True";
+                            detail.IsAddEquipment = "True";
+                            detail.ECurrent_Location = "借用人：" + request.Name + "；借用日：" + request.Borrow_Time;
+                        }
+                        var eq = _context.Equipment
+                            .FirstOrDefault(e => e.EName == item.EName && e.Emodel == item.Emodel && e.ESource == item.ESource && e.Is_Consumable == "False");
+                        if (eq != null)
+                        {
+                            eq.EBorrowing_Quantity = (int.Parse(eq.EBorrowing_Quantity) + 1).ToString();
+                            eq.ERemaining_Quantity = (int.Parse(eq.ERemaining_Quantity) - 1).ToString();
+                        }
+                    }
+                }
+            }
+
+            // 建立 Application_Details（消耗品）
+            if (request.ConsumableItems != null)
+            {
+                foreach (var item in request.ConsumableItems)
+                {
+                    _context.Application_Details.Add(new Application_Details
+                    {
+                        fOrderGuid = guid,
+                        fUserId = "Manager",
+                        EName = item.EName,
+                        Emodel = item.Emodel,
+                        EId = "消耗品",
+                        ESource = item.ESource,
+                        fIsApplied = "是",
+                        IsCount_Borrowing_Times = "否",
+                        Consumable_Borrowing_Times = item.Quantity.ToString(),
+                        Is_Consumable = "True"
+                    });
+
+                    if (request.Borrow_Time <= DateTime.Now)
+                    {
+                        var eq = _context.Equipment
+                            .FirstOrDefault(e => e.EName == item.EName && e.Emodel == item.Emodel && e.ESource == item.ESource && e.Is_Consumable == "True");
+                        if (eq != null)
+                        {
+                            eq.EBorrowing_Quantity = (int.Parse(eq.EBorrowing_Quantity) + item.Quantity).ToString();
+                            if (eq.ERemaining_Quantity != "∞")
+                                eq.ERemaining_Quantity = (int.Parse(eq.ERemaining_Quantity) - item.Quantity).ToString();
+                        }
+                    }
+                }
+            }
+
+            _context.SaveChanges();
+            return Json(new { success = true, message = "借用紀錄已建立" });
+        }
+
+    }
+
+    // 快速新增請求模型
+    public class QuickAddRequest
+    {
+        public string Name { get; set; }
+        public DateTime Borrow_Time { get; set; }
+        public DateTime Return_Time { get; set; }
+        public string Mobile { get; set; }
+        public string fEmail { get; set; }
+        public string Illustrate { get; set; }
+        public string Credentials_Mortgage { get; set; }
+        public string Equipment_Handover_Person { get; set; }
+        public List<QuickAddEquipmentItem> EquipmentItems { get; set; }
+        public List<QuickAddConsumableItem> ConsumableItems { get; set; }
+    }
+
+    public class QuickAddEquipmentItem
+    {
+        public string EName { get; set; }
+        public string Emodel { get; set; }
+        public string EId { get; set; }
+        public string ESource { get; set; }
+    }
+
+    public class QuickAddConsumableItem
+    {
+        public string EName { get; set; }
+        public string Emodel { get; set; }
+        public string ESource { get; set; }
+        public int Quantity { get; set; }
     }
 }
 

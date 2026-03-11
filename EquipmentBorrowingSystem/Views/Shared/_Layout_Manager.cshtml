@@ -26,7 +26,13 @@
         <div class="sidebar-nav">
             <div class="sidebar-section-label">設備管理</div>
 
-            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ApplicationCompleted" ? "active" : "")"
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ApplicationCompleted" && ViewContext.RouteData.Values["action"]?.ToString() == "PendingApplications" ? "active" : "")"
+               href="@Url.Action("PendingApplications", "ApplicationCompleted")">
+                <i class="bi bi-clipboard-check"></i>
+                審核借用申請
+            </a>
+
+            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ApplicationCompleted" && ViewContext.RouteData.Values["action"]?.ToString() != "PendingApplications" ? "active" : "")"
                href="@Url.Action("ApplicationCompleted", "ApplicationCompleted")">
                 <i class="bi bi-box-seam"></i>
                 查詢目前借用中設備
@@ -59,7 +65,8 @@
                 返回使用者介面
             </a>
 
-            <a class="nav-link" href="#" onclick="showAdminPasswordModal(event)">
+            <a class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString() == "QuickAddRecord" ? "active" : "")"
+               href="@Url.Action("QuickAddRecord", "ApplicationCompleted")">
                 <i class="bi bi-plus-circle"></i>
                 新增借用紀錄
             </a>

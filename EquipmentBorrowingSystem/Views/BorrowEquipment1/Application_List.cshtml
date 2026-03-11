@@ -4,6 +4,7 @@
     ViewBag.Title = "申請清單";
     Layout = "~/Views/Shared/_Layout_Member.cshtml";
 
+    var imageMap = (Dictionary<string, string>)ViewBag.ImageMap ?? new Dictionary<string, string>();
     int equipmentCount = Model.Count(m => m.Is_Consumable == "False");
     int consumableCount = 0;
     foreach (var item in Model.Where(m => m.Is_Consumable == "True"))
@@ -91,8 +92,9 @@ else
                 <table class="table table-hover table-custom mb-0">
                     <thead>
                         <tr>
-                            <th style="width:35%">設備名稱</th>
-                            <th style="width:25%">設備型號</th>
+                            <th style="width:5%"></th>
+                            <th style="width:30%">設備名稱</th>
+                            <th style="width:22%">設備型號</th>
                             <th style="width:12%">設備編號</th>
                             <th style="width:15%">設備來源</th>
                             <th style="width:13%">操作</th>
@@ -101,7 +103,26 @@ else
                     <tbody>
                         @foreach (var item in Model.Where(m => m.Is_Consumable == "False"))
                         {
+                            var imgKey = item.EName + "|" + item.Emodel + "|" + item.ESource;
+                            var eImage = imageMap.ContainsKey(imgKey) ? imageMap[imgKey] : null;
+                            var hasImage = !string.IsNullOrWhiteSpace(eImage) && eImage.Trim() != " ";
                             <tr>
+                                <td class="text-center">
+                                    @if (hasImage)
+                                    {
+                                        <img src="~/Image/@eImage" alt="" class="rounded"
+                                             style="width:30px; height:30px; object-fit:cover; cursor:pointer; border:1px solid #e9ecef;"
+                                             onclick="showEqImage('@Html.Raw(eImage.Replace("'", "\\'"))', '@Html.Raw(item.EName.Replace("'", "\\'")) @Html.Raw(item.Emodel.Replace("'", "\\'"))')"
+                                             title="點擊查看圖片" />
+                                    }
+                                    else
+                                    {
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded"
+                                              style="width:30px; height:30px; background:#f0f0f0; color:#ccc; font-size:.75rem; border:1px solid #e9ecef;">
+                                            <i class="bi bi-image"></i>
+                                        </span>
+                                    }
+                                </td>
                                 <td class="fw-semibold">@item.EName</td>
                                 <td class="text-muted small">@item.Emodel</td>
                                 <td>
@@ -136,8 +157,9 @@ else
                 <table class="table table-hover table-custom mb-0">
                     <thead>
                         <tr>
-                            <th style="width:35%">消耗品名稱</th>
-                            <th style="width:25%">型號</th>
+                            <th style="width:5%"></th>
+                            <th style="width:30%">消耗品名稱</th>
+                            <th style="width:22%">型號</th>
                             <th style="width:15%">借用數量</th>
                             <th style="width:12%">來源</th>
                             <th style="width:13%">操作</th>
@@ -146,7 +168,26 @@ else
                     <tbody>
                         @foreach (var item in Model.Where(m => m.Is_Consumable == "True"))
                         {
+                            var imgKey = item.EName + "|" + item.Emodel + "|" + item.ESource;
+                            var eImage = imageMap.ContainsKey(imgKey) ? imageMap[imgKey] : null;
+                            var hasImage = !string.IsNullOrWhiteSpace(eImage) && eImage.Trim() != " ";
                             <tr>
+                                <td class="text-center">
+                                    @if (hasImage)
+                                    {
+                                        <img src="~/Image/@eImage" alt="" class="rounded"
+                                             style="width:30px; height:30px; object-fit:cover; cursor:pointer; border:1px solid #e9ecef;"
+                                             onclick="showEqImage('@Html.Raw(eImage.Replace("'", "\\'"))', '@Html.Raw(item.EName.Replace("'", "\\'")) @Html.Raw(item.Emodel.Replace("'", "\\'"))')"
+                                             title="點擊查看圖片" />
+                                    }
+                                    else
+                                    {
+                                        <span class="d-inline-flex align-items-center justify-content-center rounded"
+                                              style="width:30px; height:30px; background:#f0f0f0; color:#ccc; font-size:.75rem; border:1px solid #e9ecef;">
+                                            <i class="bi bi-image"></i>
+                                        </span>
+                                    }
+                                </td>
                                 <td class="fw-semibold">@item.EName</td>
                                 <td class="text-muted small">@item.Emodel</td>
                                 <td>
@@ -275,8 +316,42 @@ else
     </div>
 </div>
 
+@* ===== 設備圖片預覽 Modal ===== *@
+<div class="modal fade" id="eqImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content" style="border-radius:12px; overflow:hidden;">
+            <div class="modal-header py-2" style="background:#f0f4f8; border-bottom:1px solid #e9ecef;">
+                <h6 class="modal-title fw-bold" style="font-size:.85rem;" id="eqImageTitle">設備圖片</h6>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-3">
+                <img id="eqImagePreview" src="" alt="設備圖片" style="max-width:100%; max-height:400px; border-radius:8px; object-fit:contain;" />
+                <div id="eqImageNone" class="py-4 text-muted" style="display:none;">
+                    <i class="bi bi-image fs-1 d-block mb-2" style="opacity:.3;"></i>
+                    <small>此設備尚未上傳圖片</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
+    function showEqImage(imageName, title) {
+        var imgEl = document.getElementById('eqImagePreview');
+        var noneEl = document.getElementById('eqImageNone');
+        document.getElementById('eqImageTitle').textContent = title || '設備圖片';
+        if (imageName && imageName.trim() && imageName.trim() !== ' ') {
+            imgEl.src = '/Image/' + encodeURIComponent(imageName.trim());
+            imgEl.style.display = 'block';
+            noneEl.style.display = 'none';
+        } else {
+            imgEl.style.display = 'none';
+            noneEl.style.display = 'block';
+        }
+        new bootstrap.Modal(document.getElementById('eqImageModal')).show();
+    }
+
     var applicationConsumablesCount = @consumableCount;
 
     // ===== 申請表單驗證 =====

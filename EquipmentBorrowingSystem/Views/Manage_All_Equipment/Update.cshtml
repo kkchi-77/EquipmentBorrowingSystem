@@ -1,260 +1,146 @@
 @model EquipmentBorrowingSystem.ViewModel.EquipmentViewModel
-
 @{
-    ViewData["Title"] = "Create";
-    var welcomeMessage = TempData["WelcomeMessage"] as string;
+    ViewData["Title"] = "修改設備";
     Layout = "~/Views/Shared/_Layout_Manager.cshtml";
+    var eq = Model.Equipment.FirstOrDefault();
 }
-<style>
-    /* 表格樣式 */
-    table {
-        border-collapse: collapse;
-        width: 100%;
-    }
 
-    th, td {
-        border: 1px solid black;
-        padding: 8px;
-        text-align: center;
-    }
+<div class="page-header">
+    <h4><i class="bi bi-pencil-square me-2" style="color:#5b9bd5;"></i>修改設備資料</h4>
+    <p class="page-subtitle">@eq?.EName — @eq?.Emodel (@Model.ESource)</p>
+</div>
 
-    th {
-        background-color: #f2f2f2;
-    }
-</style>
-<h1>修改此設備及編號</h1>
-<hr />
-@foreach (var item in Model.Equipment)
-{
-    <div class="row">
-        <div class="col-md-4 col-12">
+<div class="content-card mb-3">
+    <div class="content-card-header">
+        <h5><i class="bi bi-box-seam"></i> 基本資料</h5>
+    </div>
+    <div class="p-3">
+        @if (eq != null)
+        {
             <form action="@Url.Action("Update_Edit", "Manage_All_Equipment")" method="post" enctype="multipart/form-data">
-                <div class="form-horizontal">
+                <input type="hidden" name="EName_old" value="@eq.EName" />
+                <input type="hidden" name="Emodel_old" value="@eq.Emodel" />
+                <input type="hidden" name="ESource_old" value="@Model.ESource" />
+                <input type="hidden" name="EImage_old" value="@eq.EImage" />
 
-                    <div class="form-group">
-                        <b> <span class="control-label col-md-2" style="padding-top: 10px;">設備名稱：</span></b>
-
-                        <input type="text" id="EName" name="EName" required="required" value="@Html.DisplayFor(modelItem => item.EName)" autocomplete="off" style="width: calc(100% - 20px);" />
-                        <input type="hidden" name="EName_old" value="@Html.DisplayFor(modelItem => item.EName)" /> <!-- 添加隐藏字段传递 item.Emodel 的值 -->
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold small">設備名稱 <span class="text-danger">*</span></label>
+                        <input type="text" name="EName" class="form-control form-control-sm" required autocomplete="off" value="@eq.EName" />
                     </div>
-
-                    <div class="form-group" style="padding-top: 10px;">
-                        <b>
-                            <span class="control-label col-md-2">設備型號：</span>
-                        </b>
-
-                        <input type="text" id="Emodel" name="Emodel" required="required" value="@Html.DisplayFor(modelItem => item.Emodel)" autocomplete="off" style="width: calc(100% - 20px);" />
-                        <input type="hidden" name="Emodel_old" value="@Html.DisplayFor(modelItem => item.Emodel)" /> <!-- 添加隐藏字段传递 item.Emodel 的值 -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold small">設備型號 <span class="text-danger">*</span></label>
+                        <input type="text" name="Emodel" class="form-control form-control-sm" required autocomplete="off" value="@eq.Emodel" />
                     </div>
-
-                    <div class="form-group" style="padding-top: 10px;" id="inputContainer">
-                        <b>
-                            <span class="control-label col-md-2">設備總數量：</span>
-                        </b>
-                        <input type="number" id="EQuantity" name="EQuantity" value="@Html.DisplayFor(modelItem => item.EQuantity)" required="required" autocomplete="off" style="width: calc(100% - 20px);" />
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">設備總數量 <span class="text-danger">*</span></label>
+                        <input type="number" id="eqQtyInput" name="EQuantity" class="form-control form-control-sm" required autocomplete="off" value="@eq.EQuantity" />
                     </div>
-
-                    @* placeholder *@
-
-                    <div class="form-group" style="padding-top: 10px;">
-                        <b>
-                            <span class="control-label col-md-2">數量單位：</span>
-                        </b>
-                        <input type="text" id="EQuantity_Unit" name="EQuantity_Unit" required="required" value="@Html.DisplayFor(modelItem => item.EQuantity_Unit)" autocomplete="off" style="width: calc(100% - 20px);" />
-
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">數量單位 <span class="text-danger">*</span></label>
+                        <input type="text" name="EQuantity_Unit" class="form-control form-control-sm" required autocomplete="off" value="@eq.EQuantity_Unit" />
                     </div>
-                    <div class="form-group" style="padding-top: 10px;">
-                        <b>
-                            <span class="control-label col-md-2">設備來源：</span>
-                        </b>
-                        <div>
-                            <label><input type="radio" id="radioSelfPurchased" name="ESource" value="自購" @(Model.ESource == "自購" ? "checked" : "")> 自購</label>
-                            <label><input type="radio" id="radioEducationOffice" name="ESource" value="教育局" @(Model.ESource == "教育局" ? "checked" : "")> 教育局</label>
-                            <input type="hidden" name="ESource_old" value="@Model.ESource" /> <!-- 使用隱藏字段來傳遞數據 -->
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">設備來源 <span class="text-danger">*</span></label>
+                        <select name="ESource" class="form-select form-select-sm" required>
+                            @if (Model.ESource == "自購")
+                            {
+                                <option value="自購" selected>自購</option>
+                                <option value="教育局">教育局</option>
+                            }
+                            else
+                            {
+                                <option value="自購">自購</option>
+                                <option value="教育局" selected>教育局</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">是否為消耗品</label>
+                        <div class="d-flex gap-3 mt-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="Is_Consumable" id="consumableNo" value="False" @(Model.Is_Consumable == "False" ? "checked" : "")>
+                                <label class="form-check-label small" for="consumableNo">否</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="Is_Consumable" id="consumableYes" value="True" @(Model.Is_Consumable == "True" ? "checked" : "")>
+                                <label class="form-check-label small" for="consumableYes">是</label>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group" style="padding-top: 10px;">
-                        <b>
-                            <span class="control-label col-md-2">是否為消耗品：</span>
-                        </b>
-                        <div>
-                            <label><input type="radio" id="radioSelfPurchased1" name="Is_Consumable" value="True" @(Model.Is_Consumable == "True" ? "checked" : "")> 是</label>
-                            <label><input type="radio" id="radioEducationOffice1" name="Is_Consumable" value="False" @(Model.Is_Consumable == "False" ? "checked" : "")> 否</label>
-                            <input type="hidden" name="Is_Consumable_old" value="@Model.Is_Consumable" /> <!-- 使用隱藏字段來傳遞數據 -->
-                        </div>
-                    </div>
-
-
-                    <div class="form-group" style="padding-top: 10px;">
-                        <b>
-                            <span class="control-label col-md-2">上傳圖片：</span>
-                        </b>
-                        <input type="file" id="FileInput" name="FileInput" accept="image/*" style="width: calc(100% - 20px);" onchange="previewImage(event)" />
-                        <input type="hidden" name="EImage_old" value="@item.EImage" /> <!-- 添加隐藏字段传递 item.Emodel 的值 -->
-                        <img id="ImagePreview" src="~/Image/@item.EImage" alt="預覽圖片" style="max-width: 100%; height: auto; margin-top: 10px;" />
-                        <p id="ImageName"></p> <!-- 新增顯示圖片名稱的段落 -->
-                    </div>
-
-                    <script>
-                        function previewImage(event) {
-                            var input = event.target;
-                            var reader = new FileReader();
-
-                            reader.onload = function () {
-                                var img = document.getElementById('ImagePreview');
-                                img.src = reader.result;
-
-                                // 顯示圖片名稱
-                                var imageName = document.getElementById('ImageName');
-                                imageName.textContent = input.files[0].name;
-                            };
-
-                            reader.readAsDataURL(input.files[0]);
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">更換設備圖片</label>
+                        <input type="file" name="FileInput" class="form-control form-control-sm" accept="image/*" />
+                        @if (!string.IsNullOrWhiteSpace(eq.EImage) && eq.EImage.Trim() != "")
+                        {
+                            <small class="text-muted">目前：@eq.EImage</small>
                         }
-                    </script>
-
-                    @if (Model.Is_Consumable == "False")
-                    {
-                        <hr />
-                        <h2>設備編號及詳細資訊</h2>
-                        <span>@Html.DisplayFor(modelItem => item.EName);@Html.DisplayFor(modelItem => item.Emodel)</span>
-                        <div class="col-md-8 col-12" id="dynamicInputsContainer"></div>
-                    }
-                    <hr />
-                    <div class="form-group" style="padding-top: 10px;">
-                        <div class="col-md-offset-2 col-md-10">
-                            <input type="submit" value="修改此設備資料" />
-                            @*                <button type="submit" onclick="window.history.back();">返回</button> *@
-                            <button onclick="event.preventDefault(); window.location.href='@Url.Action("Browse_All_equipment", "Manage_All_Equipment")'" style="width: 125px; height: 30px; font-size: 16px; ">返回管理介面</button>
-                        </div>
                     </div>
                 </div>
+
+                @* ===== 設備編號列表（非消耗品才顯示）===== *@
+                @if (Model.Is_Consumable == "False" && Model.Equipment_Details != null && Model.Equipment_Details.Any())
+                {
+                    <hr class="my-3" />
+                    <h6 class="fw-bold mb-3"><i class="bi bi-list-ol me-1" style="color:#5b9bd5;"></i>設備編號及詳細資訊</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0" style="font-size:.82rem;">
+                            <thead style="background:#f0f4f8;">
+                                <tr>
+                                    <th class="text-center" style="width:6%">#</th>
+                                    <th style="width:22%">設備編號</th>
+                                    <th style="width:20%">借用狀態</th>
+                                    <th style="width:52%">設備存放位置</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{ var detailIdx = 0; }
+                                @foreach (var d in Model.Equipment_Details)
+                                {
+                                    detailIdx++;
+                                    <tr>
+                                        <td class="text-center text-muted">@detailIdx</td>
+                                        <td>
+                                            <input type="text" name="EId[]" class="form-control form-control-sm" value="@d.EId" autocomplete="off" />
+                                        </td>
+                                        <td>
+                                            <select name="IsBorrow[]" class="form-select form-select-sm">
+                                                @{
+                                                    var borrowOptions = new[] { ("False", "未借出"), ("True", "借用中"), ("Missing", "遺失") };
+                                                }
+                                                @foreach (var opt in borrowOptions)
+                                                {
+                                                    if (d.IsBorrow == opt.Item1)
+                                                    {
+                                                        <option value="@opt.Item1" selected>@opt.Item2</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@opt.Item1">@opt.Item2</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="ECurrent_Location_update[]" class="form-control form-control-sm" value="@d.ECurrent_Location" autocomplete="off" />
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                <hr class="my-3" />
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-check-circle me-1"></i>儲存修改
+                    </button>
+                    <a href="@Url.Action("Browse_All_equipment", "Manage_All_Equipment")" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-arrow-left me-1"></i>返回
+                    </a>
+                </div>
             </form>
-        </div>
+        }
     </div>
-
-
-    @if (Model.Is_Consumable == "False")
-    {
-        <script>
-            function generateDynamicInputs(quantity) {
-                var dynamicInputsContainer = document.getElementById('dynamicInputsContainer');
-                // 清空動態生成的欄位
-                dynamicInputsContainer.innerHTML = '';
-
-                if (quantity != null) {
-                    var table = document.createElement('table');
-                    var thead = document.createElement('thead');
-                    var tbody = document.createElement('tbody');
-
-                    // 建立表頭
-                    var theadRow = document.createElement('tr');
-                    var th1 = document.createElement('th');
-                    th1.textContent = '順序';
-                    var th2 = document.createElement('th');
-                    th2.textContent = '設備編號';
-                    var th3 = document.createElement('th');
-                    th3.textContent = '借用狀態';
-                    var th4 = document.createElement('th');
-                    th4.textContent = '設備存放位置';
-                    theadRow.appendChild(th1);
-                    theadRow.appendChild(th2);
-                    theadRow.appendChild(th3);
-                    theadRow.appendChild(th4);
-                    thead.appendChild(theadRow);
-                    table.appendChild(thead);
-
-                    // 建立表身
-                    var count = 1;
-            @foreach (var item1 in Model.Equipment_Details)
-            {
-                <text>var tbodyRow = document.createElement('tr');
-                        var td1 = document.createElement('td');
-                        var order = document.createElement('label');
-
-                        order.textContent = count + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"; // 插入六個不間斷的空白字元
-                        td1.appendChild(order);
-                        var td2 = document.createElement('td');
-                        var eidinput = document.createElement('input');
-                        eidinput.type = 'text';
-                        eidinput.name = 'EId[]';
-                        eidinput.value = '@Html.Raw(item1.EId)';
-                        td2.appendChild(eidinput);
-                        var td3 = document.createElement('td');
-                        var borrowStatusSelect = document.createElement('select');
-                        borrowStatusSelect.name = 'IsBorrow[]';
-
-                        var optionYes = document.createElement('option');
-                        optionYes.value = 'True';
-                        optionYes.text = '是' + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0";
-                        borrowStatusSelect.appendChild(optionYes);
-
-                        var optionNo = document.createElement('option');
-                        optionNo.value = 'False';
-                        optionNo.text = '否' + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0";
-                        borrowStatusSelect.appendChild(optionNo);
-
-                        var optionMissing = document.createElement('option');
-                        optionMissing.value = 'Missing';
-                        optionMissing.text = '遺失' + "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0";
-                        borrowStatusSelect.appendChild(optionMissing);
-
-                        if ('@item1.IsBorrow' == 'True') {
-                            optionYes.selected = true;
-                        } else if ('@item1.IsBorrow' == 'False') {
-                            optionNo.selected = true;
-                        } else if ('@item1.IsBorrow' == 'Missing') {
-                            optionMissing.selected = true;
-                        }
-
-                        td3.appendChild(borrowStatusSelect);
-                        var td4 = document.createElement('td');
-                        var locationInput = document.createElement('input');
-                        locationInput.type = 'text';
-                        locationInput.name = 'ECurrent_Location_update[]';
-                        locationInput.value = '@Html.Raw(item1.ECurrent_Location)';
-                        td4.appendChild(locationInput);
-                        tbodyRow.appendChild(td1);
-                        tbodyRow.appendChild(td2);
-                        tbodyRow.appendChild(td3);
-                        tbodyRow.appendChild(td4);
-                        tbody.appendChild(tbodyRow);
-                        count++; </text>
-
-            }
-
-                        table.appendChild(tbody);
-                    dynamicInputsContainer.appendChild(table);
-                }
-            }
-
-            // 在頁面載入時觸發動態生成欄位的函數
-            window.onload = function () {
-                var quantityInput = document.getElementById('EQuantity');
-                var dynamicInputsContainer = document.getElementById('dynamicInputsContainer');
-
-                // 初始化動態生成欄位
-                generateDynamicInputs(parseInt(quantityInput.value));
-
-                // 監聽數量輸入框的變化
-                quantityInput.addEventListener('change', function () {
-                    var newQuantity = parseInt(quantityInput.value);
-                    generateDynamicInputs(newQuantity);
-                });
-            };
-            function decodeHtml(html) {
-                var txt = document.createElement("textarea");
-                txt.innerHTML = html;
-                return txt.value;
-            }
-            function setEIdValue(inputElement, value) {
-                if (value === "無") {
-                    inputElement.value = "無";
-                } else {
-                    inputElement.value = value;
-                }
-            }
-        </script>
-    }
-}
-
+</div>

@@ -175,7 +175,7 @@
                                 <small class="text-muted">(申) @item.Date_Of_Application.ToString("yyyy/MM/dd")</small><br />
                             }
                             <small style="color:#1a7a33;"><i class="bi bi-box-arrow-up-right"></i> @item.Borrow_Time.ToString("yyyy/MM/dd")</small><br />
-                            <small style="color:#c0392b;"><i class="bi bi-box-arrow-in-down-left"></i> @item.Return_Time.ToString("yyyy/MM/dd")</small>
+                            <small style="color:#c0392b;"><i class="bi bi-box-arrow-in-down-left"></i> @(item.Return_Time.Year >= 9999 ? "無期限" : item.Return_Time.ToString("yyyy/MM/dd"))</small>
                         </td>
                         <td class="fw-semibold">@item.Name</td>
                         <td>
@@ -226,12 +226,10 @@
                         </td>
                         <td>
                             <div class="d-flex flex-column gap-1">
-                                <form action="@Url.Action("Select_ApplicationCompleted_List", "ApplicationCompleted")" method="post">
-                                    <input type="hidden" name="fOrderGuid" value="@item.fOrderGuid" />
-                                    <button type="submit" class="btn btn-sm btn-outline-primary w-100" style="font-size:.78rem;">
-                                        <i class="bi bi-list-ul me-1"></i>詳細資訊
-                                    </button>
-                                </form>
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100" style="font-size:.78rem;"
+                                        onclick="showDetailModal('@item.fOrderGuid', '@Url.Action("GetApplicationDetails", "ApplicationCompleted")')">
+                                    <i class="bi bi-list-ul me-1"></i>詳細資訊
+                                </button>
                                 <form action="@Url.Action("Equipment_Receive_Person", "EquipmentReturn")" method="post">
                                     <input type="hidden" name="fOrderGuid" value="@item.fOrderGuid" />
                                     <button type="submit" class="btn btn-sm btn-warning w-100" style="font-size:.78rem;">
@@ -246,6 +244,8 @@
         </table>
     </div>
 </div>
+
+@await Html.PartialAsync("_DetailModal")
 
 @section Scripts {
 <script>

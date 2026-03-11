@@ -1,0 +1,481 @@
+@{
+    ViewBag.Title = "快速新增借用紀錄";
+    Layout = "~/Views/Shared/_Layout_Manager.cshtml";
+}
+
+<div class="page-header">
+    <h4><i class="bi bi-plus-circle me-2" style="color:#5b9bd5;"></i>快速新增借用紀錄</h4>
+    <p class="page-subtitle">直接建立設備借用紀錄，免經審核流程</p>
+</div>
+
+<!-- ===== 借用人資訊 ===== -->
+<div class="content-card mb-3">
+    <div class="content-card-header">
+        <h5><i class="bi bi-person-lines-fill"></i> 借用人資訊</h5>
+    </div>
+    <div class="p-3">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">借用人姓名 <span class="text-danger">*</span></label>
+                <input type="text" id="qa_name" class="form-control form-control-sm" placeholder="請輸入姓名" required />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">聯絡電話</label>
+                <input type="text" id="qa_mobile" class="form-control form-control-sm" placeholder="選填" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">Email</label>
+                <input type="email" id="qa_email" class="form-control form-control-sm" placeholder="選填" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small">借用時間 <span class="text-danger">*</span></label>
+                <input type="datetime-local" id="qa_borrow_time" class="form-control form-control-sm" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small">歸還時間 <span class="text-danger">*</span></label>
+                <input type="datetime-local" id="qa_return_time" class="form-control form-control-sm" required />
+                <div class="form-check mt-1">
+                    <input class="form-check-input" type="checkbox" id="qa_no_deadline" onchange="toggleNoDeadline(this)">
+                    <label class="form-check-label small text-muted" for="qa_no_deadline">無期限（長期借用）</label>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold small">證件抵押</label>
+                <select id="qa_credentials" class="form-select form-select-sm">
+                    <option value="身分免押">身分免押</option>
+                    <option value="學生證">學生證</option>
+                    <option value="駕照">駕照</option>
+                    <option value="身分證">身分證</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold small">移交人（借出人）<span class="text-danger">*</span></label>
+                <input type="text" id="qa_handover" class="form-control form-control-sm" placeholder="填寫設備移交人姓名" required />
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-semibold small">用途說明</label>
+                <input type="text" id="qa_illustrate" class="form-control form-control-sm" placeholder="選填" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 設備選擇 ===== -->
+<div class="content-card mb-3">
+    <div class="content-card-header">
+        <h5><i class="bi bi-box-seam"></i> 借用設備</h5>
+        <span class="badge bg-primary" id="eqCountBadge">0 項</span>
+    </div>
+    <div class="p-3">
+        <!-- 新增設備列 -->
+        <div class="row g-2 align-items-end mb-3 p-2" style="background:#f8f9fb; border-radius:8px;">
+            <div class="col-md-4">
+                <label class="form-label small mb-1">搜尋設備</label>
+                <div class="position-relative" id="eqSearchWrapper">
+                    <input type="text" id="eq_search" class="form-control form-control-sm" placeholder="輸入設備名稱、型號或來源..." autocomplete="off" />
+                    <input type="hidden" id="eq_select" value="" />
+                    <div id="eqDropdown" class="dropdown-menu w-100 shadow-sm" style="max-height:220px; overflow-y:auto; font-size:.82rem; display:none;"></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1">編號</label>
+                <select id="eq_eid_select" class="form-select form-select-sm" disabled>
+                    <option value="">-- 先選擇設備 --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">剩餘</label>
+                <input type="text" id="eq_remaining" class="form-control form-control-sm" readonly disabled />
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-sm btn-primary w-100" onclick="addEquipment()">
+                    <i class="bi bi-plus-lg me-1"></i>加入
+                </button>
+            </div>
+        </div>
+        <!-- 已選設備列表 -->
+        <div id="eqList">
+            <div id="eqEmpty" class="text-center text-muted py-3">
+                <i class="bi bi-inbox d-block mb-1" style="font-size:1.5rem;"></i>
+                <small>尚未選擇任何設備</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 消耗品選擇 ===== -->
+<div class="content-card mb-3">
+    <div class="content-card-header">
+        <h5><i class="bi bi-droplet"></i> 消耗品</h5>
+        <span class="badge bg-warning text-dark" id="csCountBadge">0 項</span>
+    </div>
+    <div class="p-3">
+        <div class="row g-2 align-items-end mb-3 p-2" style="background:#fef9f0; border-radius:8px;">
+            <div class="col-md-4">
+                <label class="form-label small mb-1">消耗品</label>
+                <select id="cs_select" class="form-select form-select-sm">
+                    <option value="">-- 選擇消耗品 --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">剩餘</label>
+                <input type="text" id="cs_remaining" class="form-control form-control-sm" readonly disabled />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-1">數量</label>
+                <input type="number" id="cs_qty" class="form-control form-control-sm" min="1" value="1" />
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-sm btn-warning w-100" onclick="addConsumable()">
+                    <i class="bi bi-plus-lg me-1"></i>加入
+                </button>
+            </div>
+        </div>
+        <div id="csList">
+            <div id="csEmpty" class="text-center text-muted py-3">
+                <i class="bi bi-inbox d-block mb-1" style="font-size:1.5rem;"></i>
+                <small>尚未選擇任何消耗品</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 提交 ===== -->
+<div class="d-flex gap-2 mb-4">
+    <button type="button" class="btn btn-success px-5" id="submitBtn" onclick="submitQuickAdd()">
+        <i class="bi bi-check-circle me-1"></i>建立借用紀錄
+    </button>
+    <a href="@Url.Action("ApplicationCompleted", "ApplicationCompleted")" class="btn btn-outline-secondary px-4">
+        <i class="bi bi-arrow-left me-1"></i>返回
+    </a>
+</div>
+
+<!-- Toast 通知 -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
+    <div id="toast" class="toast align-items-center border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMsg"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // ===== 資料儲存 =====
+    var equipmentData = [];   // 所有設備選項 [{eName, emodel, eSource, eRemaining_Quantity}]
+    var consumableData = [];  // 所有消耗品
+    var selectedEquipment = [];  // 已選設備 [{eName, emodel, eId, eSource}]
+    var selectedConsumables = []; // 已選消耗品 [{eName, emodel, eSource, quantity}]
+
+    // ===== 初始化 =====
+    document.addEventListener('DOMContentLoaded', function () {
+        // 設定預設時間
+        var now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('qa_borrow_time').value = now.toISOString().slice(0, 16);
+        var ret = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        document.getElementById('qa_return_time').value = ret.toISOString().slice(0, 16);
+
+        loadEquipment();
+        loadConsumables();
+        initEquipmentSearch();
+
+        // 如果有 checkbox 狀態殘留（瀏覽器 back）
+        if (document.getElementById('qa_no_deadline').checked) toggleNoDeadline(document.getElementById('qa_no_deadline'));
+    });
+
+    function loadEquipment() {
+        fetch('@Url.Action("GetAvailableEquipment", "ApplicationCompleted")')
+            .then(r => r.json())
+            .then(data => {
+                equipmentData = data;
+            });
+    }
+
+    // ===== 無期限切換 =====
+    function toggleNoDeadline(cb) {
+        var returnInput = document.getElementById('qa_return_time');
+        if (cb.checked) {
+            returnInput.value = '';
+            returnInput.disabled = true;
+            returnInput.style.background = '#e9ecef';
+            returnInput.placeholder = '無期限';
+            returnInput.removeAttribute('required');
+        } else {
+            returnInput.disabled = false;
+            returnInput.style.background = '';
+            returnInput.placeholder = '';
+            returnInput.setAttribute('required', '');
+            // 還原預設歸還時間（+7天）
+            var now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            var ret = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            returnInput.value = ret.toISOString().slice(0, 16);
+        }
+    }
+
+    // ===== 設備搜尋式下拉 =====
+    function initEquipmentSearch() {
+        var searchInput = document.getElementById('eq_search');
+        var dropdown = document.getElementById('eqDropdown');
+        var hiddenInput = document.getElementById('eq_select');
+
+        searchInput.addEventListener('focus', function () {
+            renderEqDropdown(this.value);
+        });
+
+        searchInput.addEventListener('input', function () {
+            hiddenInput.value = '';
+            document.getElementById('eq_eid_select').innerHTML = '<option value="">-- 先選擇設備 --</option>';
+            document.getElementById('eq_eid_select').disabled = true;
+            document.getElementById('eq_remaining').value = '';
+            renderEqDropdown(this.value);
+        });
+
+        // 點擊外部關閉下拉
+        document.addEventListener('click', function (e) {
+            if (!document.getElementById('eqSearchWrapper').contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+    }
+
+    function renderEqDropdown(keyword) {
+        var dropdown = document.getElementById('eqDropdown');
+        var kw = (keyword || '').trim().toLowerCase();
+        var html = '';
+        var count = 0;
+
+        equipmentData.forEach(function (eq, i) {
+            var searchText = (eq.eName + ' ' + eq.emodel + ' ' + eq.eSource).toLowerCase();
+            if (kw && searchText.indexOf(kw) === -1) return;
+            var remaining = eq.eRemaining_Quantity;
+            var isDisabled = remaining === '0';
+            count++;
+            html += '<button type="button" class="dropdown-item py-2 px-3' + (isDisabled ? ' disabled text-muted' : '') + '" '
+                + (isDisabled ? '' : 'onclick="selectEquipment(' + i + ')"') + ' style="white-space:normal; font-size:.82rem;">'
+                + '<div class="fw-semibold">' + _esc(eq.eName) + '</div>'
+                + '<small class="text-muted">' + _esc(eq.emodel) + ' | ' + _esc(eq.eSource) + '</small>'
+                + '<span class="float-end badge ' + (isDisabled ? 'bg-secondary' : 'bg-primary') + '" style="font-size:.7rem;">剩餘 ' + _esc(remaining) + '</span>'
+                + '</button>';
+        });
+
+        if (count === 0) {
+            html = '<div class="text-center text-muted py-3 small"><i class="bi bi-search me-1"></i>找不到符合的設備</div>';
+        }
+
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    }
+
+    function selectEquipment(idx) {
+        var eq = equipmentData[idx];
+        document.getElementById('eq_search').value = eq.eName + ' | ' + eq.emodel + ' | ' + eq.eSource;
+        document.getElementById('eq_select').value = idx;
+        document.getElementById('eqDropdown').style.display = 'none';
+        document.getElementById('eq_remaining').value = eq.eRemaining_Quantity;
+
+        // 載入可選編號
+        var eidSel = document.getElementById('eq_eid_select');
+        eidSel.disabled = true;
+        eidSel.innerHTML = '<option value="">載入中...</option>';
+
+        fetch('@Url.Action("GetAvailableEIds", "ApplicationCompleted")?eName=' + encodeURIComponent(eq.eName)
+            + '&emodel=' + encodeURIComponent(eq.emodel)
+            + '&eSource=' + encodeURIComponent(eq.eSource))
+            .then(r => r.json())
+            .then(ids => {
+                eidSel.innerHTML = '<option value="">-- 選擇編號 --</option>';
+                ids.forEach(function (id) {
+                    var alreadySelected = selectedEquipment.some(function (s) {
+                        return s.eName === eq.eName && s.emodel === eq.emodel && s.eId === id && s.eSource === eq.eSource;
+                    });
+                    eidSel.innerHTML += '<option value="' + _esc(id) + '"' + (alreadySelected ? ' disabled style="color:#ccc;"' : '') + '>' + _esc(id) + (alreadySelected ? ' (已選)' : '') + '</option>';
+                });
+                eidSel.disabled = false;
+            });
+    }
+
+    function loadConsumables() {
+        fetch('@Url.Action("GetAvailableConsumables", "ApplicationCompleted")')
+            .then(r => r.json())
+            .then(data => {
+                consumableData = data;
+                var sel = document.getElementById('cs_select');
+                sel.innerHTML = '<option value="">-- 選擇消耗品 --</option>';
+                data.forEach((cs, i) => {
+                    var label = cs.eName + ' | ' + cs.emodel + ' | ' + cs.eSource + ' (剩餘:' + cs.eRemaining_Quantity + ')';
+                    sel.innerHTML += '<option value="' + i + '">' + _esc(label) + '</option>';
+                });
+                sel.onchange = function () {
+                    var idx = this.value;
+                    if (idx === '') { document.getElementById('cs_remaining').value = ''; return; }
+                    document.getElementById('cs_remaining').value = consumableData[idx].eRemaining_Quantity;
+                };
+            });
+    }
+
+    // ===== 新增設備 =====
+    function addEquipment() {
+        var eqIdx = document.getElementById('eq_select').value;
+        var eid = document.getElementById('eq_eid_select').value;
+        if (eqIdx === '' || eid === '') { showToast('請選擇設備和編號', 'warning'); return; }
+        var eq = equipmentData[eqIdx];
+
+        // 重複檢查
+        if (selectedEquipment.some(function (s) {
+            return s.eName === eq.eName && s.emodel === eq.emodel && s.eId === eid && s.eSource === eq.eSource;
+        })) {
+            showToast('此設備已在清單中', 'warning'); return;
+        }
+
+        selectedEquipment.push({ eName: eq.eName, emodel: eq.emodel, eId: eid, eSource: eq.eSource });
+        renderEquipmentList();
+        // 重新載入可選編號（標記已選的為 disabled）
+        selectEquipment(parseInt(eqIdx));
+        showToast(eq.eName + ' #' + eid + ' 已加入', 'success');
+    }
+
+    function removeEquipment(idx) {
+        selectedEquipment.splice(idx, 1);
+        renderEquipmentList();
+        // 更新可選編號
+        var eqIdx = document.getElementById('eq_select').value;
+        if (eqIdx !== '') selectEquipment(parseInt(eqIdx));
+    }
+
+    function renderEquipmentList() {
+        var container = document.getElementById('eqList');
+        document.getElementById('eqCountBadge').textContent = selectedEquipment.length + ' 項';
+        if (selectedEquipment.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted py-3"><i class="bi bi-inbox d-block mb-1" style="font-size:1.5rem;"></i><small>尚未選擇任何設備</small></div>';
+            return;
+        }
+        var html = '<div class="table-responsive"><table class="table table-sm table-hover mb-0" style="font-size:.82rem;"><thead style="background:#f0f4f8;"><tr><th>設備名稱</th><th>型號</th><th>編號</th><th>來源</th><th style="width:60px;"></th></tr></thead><tbody>';
+        selectedEquipment.forEach(function (eq, i) {
+            html += '<tr><td>' + _esc(eq.eName) + '</td><td>' + _esc(eq.emodel) + '</td><td><span class="badge bg-light text-dark border">' + _esc(eq.eId) + '</span></td><td><small class="text-muted">' + _esc(eq.eSource) + '</small></td><td><button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeEquipment(' + i + ')" title="移除"><i class="bi bi-x-lg"></i></button></td></tr>';
+        });
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    }
+
+    // ===== 新增消耗品 =====
+    function addConsumable() {
+        var csIdx = document.getElementById('cs_select').value;
+        var qty = parseInt(document.getElementById('cs_qty').value) || 0;
+        if (csIdx === '') { showToast('請選擇消耗品', 'warning'); return; }
+        if (qty < 1) { showToast('數量必須大於 0', 'warning'); return; }
+        var cs = consumableData[csIdx];
+
+        // 檢查剩餘數量
+        if (cs.eRemaining_Quantity !== '∞') {
+            var existingQty = selectedConsumables.filter(function (s) { return s.eName === cs.eName && s.emodel === cs.emodel && s.eSource === cs.eSource; }).reduce(function (a, b) { return a + b.quantity; }, 0);
+            if (existingQty + qty > parseInt(cs.eRemaining_Quantity)) {
+                showToast('超過剩餘數量', 'danger'); return;
+            }
+        }
+
+        // 合併相同消耗品
+        var existing = selectedConsumables.find(function (s) { return s.eName === cs.eName && s.emodel === cs.emodel && s.eSource === cs.eSource; });
+        if (existing) { existing.quantity += qty; }
+        else { selectedConsumables.push({ eName: cs.eName, emodel: cs.emodel, eSource: cs.eSource, quantity: qty }); }
+        renderConsumableList();
+        showToast(cs.eName + ' x' + qty + ' 已加入', 'success');
+    }
+
+    function removeConsumable(idx) {
+        selectedConsumables.splice(idx, 1);
+        renderConsumableList();
+    }
+
+    function renderConsumableList() {
+        var container = document.getElementById('csList');
+        document.getElementById('csCountBadge').textContent = selectedConsumables.length + ' 項';
+        if (selectedConsumables.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted py-3"><i class="bi bi-inbox d-block mb-1" style="font-size:1.5rem;"></i><small>尚未選擇任何消耗品</small></div>';
+            return;
+        }
+        var html = '<div class="table-responsive"><table class="table table-sm table-hover mb-0" style="font-size:.82rem;"><thead style="background:#fef9f0;"><tr><th>名稱</th><th>型號</th><th>數量</th><th>來源</th><th style="width:60px;"></th></tr></thead><tbody>';
+        selectedConsumables.forEach(function (cs, i) {
+            html += '<tr><td>' + _esc(cs.eName) + '</td><td>' + _esc(cs.emodel) + '</td><td><span class="badge bg-warning text-dark">x' + cs.quantity + '</span></td><td><small class="text-muted">' + _esc(cs.eSource) + '</small></td><td><button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeConsumable(' + i + ')" title="移除"><i class="bi bi-x-lg"></i></button></td></tr>';
+        });
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    }
+
+    // ===== 提交 =====
+    function submitQuickAdd() {
+        var name = document.getElementById('qa_name').value.trim();
+        var handover = document.getElementById('qa_handover').value.trim();
+        var borrowTime = document.getElementById('qa_borrow_time').value;
+        var isNoDeadline = document.getElementById('qa_no_deadline').checked;
+        var returnTime = isNoDeadline ? '9999-12-31T23:59' : document.getElementById('qa_return_time').value;
+
+        if (!name) { showToast('請輸入借用人姓名', 'danger'); return; }
+        if (!handover) { showToast('請輸入移交人姓名', 'danger'); return; }
+        if (!borrowTime) { showToast('請選擇借用時間', 'danger'); return; }
+        if (!isNoDeadline && !returnTime) { showToast('請選擇歸還時間', 'danger'); return; }
+        if (selectedEquipment.length === 0 && selectedConsumables.length === 0) {
+            showToast('請至少選擇一項設備或消耗品', 'danger'); return;
+        }
+
+        var btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>建立中...';
+
+        var payload = {
+            name: name,
+            borrow_Time: borrowTime,
+            return_Time: returnTime,
+            mobile: document.getElementById('qa_mobile').value.trim(),
+            fEmail: document.getElementById('qa_email').value.trim(),
+            illustrate: document.getElementById('qa_illustrate').value.trim(),
+            credentials_Mortgage: document.getElementById('qa_credentials').value,
+            equipment_Handover_Person: handover,
+            equipmentItems: selectedEquipment.map(function (e) { return { eName: e.eName, emodel: e.emodel, eId: e.eId, eSource: e.eSource }; }),
+            consumableItems: selectedConsumables.map(function (c) { return { eName: c.eName, emodel: c.emodel, eSource: c.eSource, quantity: c.quantity }; })
+        };
+
+        fetch('@Url.Action("SubmitQuickAdd", "ApplicationCompleted")', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast('借用紀錄建立成功！即將跳轉...', 'success');
+                setTimeout(function () {
+                    window.location.href = '@Url.Action("ApplicationCompleted", "ApplicationCompleted")';
+                }, 1200);
+            } else {
+                showToast(data.message || '建立失敗', 'danger');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>建立借用紀錄';
+            }
+        })
+        .catch(function () {
+            showToast('發生錯誤，請重試', 'danger');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>建立借用紀錄';
+        });
+    }
+
+    // ===== 工具函式 =====
+    function showToast(msg, type) {
+        var toast = document.getElementById('toast');
+        var body = document.getElementById('toastMsg');
+        toast.className = 'toast align-items-center border-0 text-white bg-' + (type || 'primary');
+        body.textContent = msg;
+        new bootstrap.Toast(toast, { delay: 2500 }).show();
+    }
+
+    function _esc(str) {
+        if (!str) return '';
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(str));
+        return d.innerHTML;
+    }
+</script>
+}
