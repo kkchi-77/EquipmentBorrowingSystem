@@ -47,7 +47,7 @@ jobs:
       - name: 複製檔案到 IIS 目錄
         run: |
           $src = "C:\deploy\EquipmentBorrowingSystem"
-          $dst = "C:\inetpub\wwwroot\EquipmentBorrowingSystem"
+          $dst = "C:\inetpub\wwwroot\EquipmentBorrowSystem"
           # 確保目標目錄存在
           if (-not (Test-Path $dst)) { New-Item -ItemType Directory -Path $dst -Force }
           # 使用 robocopy /MIR 但排除 Image 資料夾（設備圖片）避免被刪除
@@ -78,7 +78,7 @@ jobs:
         run: |
           Start-Sleep -Seconds 5
           try {
-            $response = Invoke-WebRequest -Uri "http://localhost" -UseBasicParsing -TimeoutSec 15
+            $response = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing -TimeoutSec 15
             Write-Host "Health check: HTTP $($response.StatusCode)"
             if ($response.StatusCode -ne 200) {
               Write-Warning "Health check returned non-200 status"
