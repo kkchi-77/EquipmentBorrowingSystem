@@ -12,35 +12,57 @@ jobs:
       - name: Checkout 程式碼
         uses: actions/checkout@v4
 
-      - name: 驗證原始碼內容
-        run: Get-Content "EquipmentBorrowingSystem\Views\BorrowEquipment1\Browse_equipment.cshtml" | Select-Object -First 50
-        shell: powershell
-
       - name: Restore 套件
         run: dotnet restore EquipmentBorrowingSystem/EquipmentBorrowingSystem.csproj
 
       - name: 發布專案
         run: |
+          # 清除舊的編譯快取，確保完全重新編譯
           if (Test-Path "EquipmentBorrowingSystem\obj") { Remove-Item "EquipmentBorrowingSystem\obj" -Recurse -Force }
           if (Test-Path "EquipmentBorrowingSystem\bin") { Remove-Item "EquipmentBorrowingSystem\bin" -Recurse -Force }
           if (Test-Path "C:\deploy\EquipmentBorrowingSystem") { Remove-Item "C:\deploy\EquipmentBorrowingSystem" -Recurse -Force }
           dotnet publish EquipmentBorrowingSystem/EquipmentBorrowingSystem.csproj -c Release -o C:\deploy\EquipmentBorrowingSystem
+          if ($LASTEXITCODE -ne 0) { Write-Error "dotnet publish failed"; exit 1 }
+          # 確認 DLL 存在
+          if (-not (Test-Path "C:\deploy\EquipmentBorrowingSystem\EquipmentBorrowingSystem.dll")) {
+            Write-Error "Publish output missing EquipmentBorrowingSystem.dll"
+            exit 1
+          }
+          Write-Host "Publish OK - DLL size: $((Get-Item 'C:\deploy\EquipmentBorrowingSystem\EquipmentBorrowingSystem.dll').Length) bytes"
         shell: powershell
 
       - name: 停止 IIS 網站
         run: |
-          Get-Process -Name "w3wp" -ErrorAction SilentlyContinue | Stop-Process -Force
-          Start-Sleep -Seconds 3
           Import-Module WebAdministration
-          try { Stop-WebAppPool -Name "EquipmentBorrowingSystem" } catch { Write-Host "AppPool already stopped." }
-          try { Stop-WebSite -Name "EquipmentBorrowingSystem" } catch { Write-Host "WebSite already stopped." }
+          # 停止網站和 AppPool
+          try { Stop-WebSite -Name "EquipmentBorrowingSystem" -ErrorAction Stop; Write-Host "WebSite stopped" } catch { Write-Host "WebSite stop: $_" }
+          try { Stop-WebAppPool -Name "EquipmentBorrowingSystem" -ErrorAction Stop; Write-Host "AppPool stopped" } catch { Write-Host "AppPool stop: $_" }
+          # 等待 w3wp 釋放檔案
           Start-Sleep -Seconds 3
+          # 如果 w3wp 仍在佔用，強制終止
+          Get-Process -Name "w3wp" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 2
         shell: powershell
 
       - name: 複製檔案到 IIS 目錄
         run: |
-          robocopy "C:\deploy\EquipmentBorrowingSystem" "C:\inetpub\wwwroot\EquipmentBorrowingSystem" /MIR /NFL /NDL /NJH /NJS
-          if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE } else { exit 0 }
+          $src = "C:\deploy\EquipmentBorrowingSystem"
+          $dst = "C:\inetpub\wwwroot\EquipmentBorrowingSystem"
+          # 確保目標目錄存在
+          if (-not (Test-Path $dst)) { New-Item -ItemType Directory -Path $dst -Force }
+          # 使用 robocopy /MIR 但排除 Image 資料夾（設備圖片）避免被刪除
+          robocopy $src $dst /MIR /XD "$dst\wwwroot\Image" /R:3 /W:5
+          $rc = $LASTEXITCODE
+          Write-Host "robocopy exit code: $rc"
+          # robocopy: 0=沒有變更, 1=複製成功, 2=有額外檔案, 3=1+2, <8 都算成功
+          if ($rc -ge 8) {
+            Write-Error "robocopy failed with exit code $rc"
+            exit 1
+          }
+          # 確保 Image 資料夾存在（首次部署時可能不存在）
+          $imgDir = Join-Path $dst "wwwroot\Image"
+          if (-not (Test-Path $imgDir)) { New-Item -ItemType Directory -Path $imgDir -Force }
+          Write-Host "Deploy files copied successfully"
         shell: powershell
 
       - name: 啟動 IIS 網站
@@ -48,7 +70,24 @@ jobs:
           Import-Module WebAdministration
           Start-WebAppPool -Name "EquipmentBorrowingSystem"
           Start-WebSite -Name "EquipmentBorrowingSystem"
+          Write-Host "IIS started"
         shell: powershell
 
-      - name: 部署完成通知
-        run: echo "Deploy successful!"
+      - name: 部署後健康檢查
+        run: |
+          Start-Sleep -Seconds 5
+          try {
+            $response = Invoke-WebRequest -Uri "http://localhost" -UseBasicParsing -TimeoutSec 15
+            Write-Host "Health check: HTTP $($response.StatusCode)"
+            if ($response.StatusCode -ne 200) {
+              Write-Warning "Health check returned non-200 status"
+            }
+          } catch {
+            Write-Warning "Health check failed: $_"
+            Write-Warning "The site may still be starting up. Check IIS logs if issues persist."
+          }
+        shell: powershell
+
+      - name: 部署完成
+        run: Write-Host "Deploy completed at $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+        shell: powershell
