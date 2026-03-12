@@ -40,20 +40,37 @@
                         <label class="form-label fw-semibold small">數量單位 <span class="text-danger">*</span></label>
                         <input type="text" name="EQuantity_Unit" class="form-control form-control-sm" required autocomplete="off" value="@eq.EQuantity_Unit" />
                     </div>
+                    @{
+                        var knownSources = new[] { "自購", "教育局" };
+                        var isOtherSource = !knownSources.Contains(Model.ESource);
+                    }
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small">設備來源 <span class="text-danger">*</span></label>
-                        <select name="ESource" class="form-select form-select-sm" required>
-                            @if (Model.ESource == "自購")
+                        <select id="eSourceSelect" class="form-select form-select-sm" required onchange="toggleESourceOther()" @(isOtherSource ? "" : "name=ESource")>
+                            @foreach (var src in knownSources)
                             {
-                                <option value="自購" selected>自購</option>
-                                <option value="教育局">教育局</option>
+                                if (Model.ESource == src)
+                                {
+                                    <option value="@src" selected>@src</option>
+                                }
+                                else
+                                {
+                                    <option value="@src">@src</option>
+                                }
+                            }
+                            @if (isOtherSource)
+                            {
+                                <option value="__other__" selected>其他（自訂）</option>
                             }
                             else
                             {
-                                <option value="自購">自購</option>
-                                <option value="教育局" selected>教育局</option>
+                                <option value="__other__">其他（自訂）</option>
                             }
                         </select>
+                        <input type="text" id="eSourceCustom" class="form-control form-control-sm mt-1" placeholder="請輸入來源" autocomplete="off"
+                               style="@(isOtherSource ? "" : "display:none;")"
+                               @(isOtherSource ? "name=ESource required" : "")
+                               value="@(isOtherSource ? Model.ESource : "")" />
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold small">是否為消耗品</label>
@@ -144,3 +161,24 @@
         }
     </div>
 </div>
+
+@section Scripts {
+<script>
+    function toggleESourceOther() {
+        var sel = document.getElementById('eSourceSelect');
+        var custom = document.getElementById('eSourceCustom');
+        if (sel.value === '__other__') {
+            custom.style.display = '';
+            custom.required = true;
+            custom.name = 'ESource';
+            sel.removeAttribute('name');
+        } else {
+            custom.style.display = 'none';
+            custom.required = false;
+            custom.value = '';
+            custom.removeAttribute('name');
+            sel.name = 'ESource';
+        }
+    }
+</script>
+}

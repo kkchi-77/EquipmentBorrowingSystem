@@ -116,31 +116,6 @@
         </footer>
     </div>
 
-    <!-- ==================== Admin Password Modal ==================== -->
-    <div class="modal fade" id="adminPasswordModal" tabindex="-1" aria-labelledby="adminPasswordModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content" style="border-radius: 12px; overflow: hidden;">
-                <div class="modal-body text-center pt-4 pb-3 px-4">
-                    <div class="mb-3" style="width:52px;height:52px;border-radius:50%;background:rgba(91,155,213,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:1.4rem;color:#5b9bd5;">
-                        <i class="bi bi-shield-lock"></i>
-                    </div>
-                    <h6 class="fw-bold mb-1" id="adminPasswordModalLabel">管理者驗證</h6>
-                    <p class="text-muted small mb-3">請輸入管理權限密碼以繼續</p>
-                    <div id="adminPasswordError" class="alert alert-danger py-2 small d-none mb-2">
-                        密碼輸入錯誤，請重新輸入
-                    </div>
-                    <input type="password" id="adminPasswordInput" class="form-control form-control-sm text-center mb-3"
-                           placeholder="請輸入密碼" autocomplete="off" />
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-light btn-sm flex-fill" data-bs-dismiss="modal">取消</button>
-                        <button type="button" class="btn btn-sm flex-fill text-white" style="background-color:#5b9bd5;"
-                                id="adminPasswordConfirmBtn" onclick="validateAdminPassword()">確認</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
@@ -161,68 +136,6 @@
             overlay.classList.remove('show');
         }
 
-        // ===== Admin Password Modal =====
-        function showAdminPasswordModal(event) {
-            event.preventDefault();
-            document.getElementById('adminPasswordInput').value = '';
-            document.getElementById('adminPasswordError').classList.add('d-none');
-            var modal = new bootstrap.Modal(document.getElementById('adminPasswordModal'));
-            modal.show();
-            setTimeout(function () {
-                document.getElementById('adminPasswordInput').focus();
-            }, 300);
-        }
-
-        // Enter key in password input
-        document.addEventListener('DOMContentLoaded', function () {
-            document.getElementById('adminPasswordInput').addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') validateAdminPassword();
-            });
-        });
-
-        function validateAdminPassword() {
-            var password = document.getElementById('adminPasswordInput').value;
-            var btn = document.getElementById('adminPasswordConfirmBtn');
-            var errorDiv = document.getElementById('adminPasswordError');
-
-            if (!password) {
-                errorDiv.textContent = '請輸入密碼';
-                errorDiv.classList.remove('d-none');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>驗證中';
-
-            fetch('@Url.Action("ValidateAdminPassword", "Manager")', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ''
-                },
-                body: JSON.stringify({ password: password })
-            })
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                if (data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('adminPasswordModal')).hide();
-                    window.location.href = '@Url.Action("Manage_CreateApplicationCompleted_Browse_equipment", "Manage_CreateApplicationCompleted")';
-                } else {
-                    errorDiv.textContent = '密碼輸入錯誤，請重新輸入';
-                    errorDiv.classList.remove('d-none');
-                    document.getElementById('adminPasswordInput').value = '';
-                    document.getElementById('adminPasswordInput').focus();
-                    btn.disabled = false;
-                    btn.innerHTML = '確認';
-                }
-            })
-            .catch(function () {
-                errorDiv.textContent = '驗證失敗，請稍後再試';
-                errorDiv.classList.remove('d-none');
-                btn.disabled = false;
-                btn.innerHTML = '確認';
-            });
-        }
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

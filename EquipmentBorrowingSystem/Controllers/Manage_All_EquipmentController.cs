@@ -206,6 +206,14 @@ namespace EquipmentBorrowingSystem.Controllers
             string ESource = model.ESource;
             string ECurrent_Location = model.ECurrent_Location;
 
+            // 防呆：檢查是否已存在相同 名稱+型號+來源 的設備
+            var existingEquipment = _context.Equipment
+                .FirstOrDefault(e => e.EName == EName && e.Emodel == EModel && e.ESource == ESource);
+            if (existingEquipment != null)
+            {
+                TempData["ErrorMessage"] = "此設備已存在（相同名稱、型號、來源），無法重複新增。";
+                return RedirectToAction("Create");
+            }
 
             Equipment equipment = new Equipment();
             equipment.EName = EName;

@@ -9,6 +9,14 @@
     <p class="page-subtitle">新增一筆設備資料至系統</p>
 </div>
 
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
 <div class="content-card mb-3">
     <div class="content-card-header">
         <h5><i class="bi bi-box-seam"></i> 設備基本資料</h5>
@@ -30,11 +38,13 @@
                 </div>
                 <div class="col-md-2">
                     <label class="form-label fw-semibold small">設備來源 <span class="text-danger">*</span></label>
-                    <select name="ESource" class="form-select form-select-sm" required>
+                    <select id="eSourceSelect" name="ESource" class="form-select form-select-sm" required onchange="toggleESourceOther()">
                         <option value="">-- 請選擇 --</option>
                         <option value="自購">自購</option>
                         <option value="教育局">教育局</option>
+                        <option value="__other__">其他（自訂）</option>
                     </select>
+                    <input type="text" id="eSourceCustom" class="form-control form-control-sm mt-1" placeholder="請輸入來源" autocomplete="off" style="display:none;" />
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold small">是否為消耗品 <span class="text-danger">*</span></label>
@@ -92,6 +102,23 @@
 
 @section Scripts {
 <script>
+    function toggleESourceOther() {
+        var sel = document.getElementById('eSourceSelect');
+        var custom = document.getElementById('eSourceCustom');
+        if (sel.value === '__other__') {
+            custom.style.display = '';
+            custom.required = true;
+            custom.name = 'ESource';
+            sel.removeAttribute('name');
+        } else {
+            custom.style.display = 'none';
+            custom.required = false;
+            custom.value = '';
+            custom.removeAttribute('name');
+            sel.name = 'ESource';
+        }
+    }
+
     function toggleConsumable() {
         var isConsumable = document.getElementById('consumableYes').checked;
         document.getElementById('equipmentSection').style.display = isConsumable ? 'none' : '';
