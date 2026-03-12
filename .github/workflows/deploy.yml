@@ -63,6 +63,7 @@ jobs:
           $imgDir = Join-Path $dst "wwwroot\Image"
           if (-not (Test-Path $imgDir)) { New-Item -ItemType Directory -Path $imgDir -Force }
           Write-Host "Deploy files copied successfully"
+          exit 0
         shell: powershell
 
       - name: 啟動 IIS 網站
