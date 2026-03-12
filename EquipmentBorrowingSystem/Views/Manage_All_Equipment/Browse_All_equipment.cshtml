@@ -7,6 +7,7 @@
     var availableCount = Model.Equipment.Count(e => e.ERemaining_Quantity != "0");
     var borrowingCount = Model.Equipment.Sum(e => int.TryParse(e.EBorrowing_Quantity, out var v) ? v : 0);
     var missingCount = Model.Equipment.Sum(e => int.TryParse(e.EMissing_quantity, out var v) ? v : 0);
+    var damagedCount = Model.Equipment.Sum(e => int.TryParse(e.EDamaged_Quantity, out var v) ? v : 0);
 
     bool isSearchResult = !string.IsNullOrEmpty(Model.keyword) || (Model.select != null && Model.select != "全部設備");
 }
@@ -122,12 +123,21 @@
                 </div>
             </div>
         </div>
-        <div class="col-6 col-xl-3">
+        <div class="col-6 col-xl">
             <div class="stat-card" style="border-left:4px solid #e74c3c;">
                 <div class="stat-icon" style="color:#e74c3c;"><i class="bi bi-exclamation-triangle"></i></div>
                 <div>
                     <div class="stat-number">@missingCount</div>
                     <div class="stat-label">遺失數量</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl">
+            <div class="stat-card" style="border-left:4px solid #343a40;">
+                <div class="stat-icon" style="color:#343a40;"><i class="bi bi-wrench-adjustable"></i></div>
+                <div>
+                    <div class="stat-number">@damagedCount</div>
+                    <div class="stat-label">損壞數量</div>
                 </div>
             </div>
         </div>
@@ -147,14 +157,15 @@
             <thead>
                 <tr>
                     <th style="width:4%">#</th>
-                    <th style="width:22%">設備名稱</th>
-                    <th style="width:14%">型號</th>
-                    <th style="width:7%">來源</th>
-                    <th style="width:6%">類型</th>
-                    <th style="width:7%">總數量</th>
-                    <th style="width:8%">借用中</th>
-                    <th style="width:7%">剩餘</th>
-                    <th style="width:7%">遺失</th>
+                    <th style="width:20%">設備名稱</th>
+                    <th style="width:13%">型號</th>
+                    <th style="width:6%">來源</th>
+                    <th style="width:5%">類型</th>
+                    <th style="width:6%">總數量</th>
+                    <th style="width:6%">借用中</th>
+                    <th style="width:6%">剩餘</th>
+                    <th style="width:5%">遺失</th>
+                    <th style="width:5%">損壞</th>
                     <th style="width:18%">操作</th>
                 </tr>
             </thead>
@@ -162,7 +173,7 @@
                 @if (!Model.Equipment.Any())
                 {
                     <tr>
-                        <td colspan="10" class="text-center py-5 text-muted">
+                        <td colspan="11" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-3 d-block mb-2"></i>找不到符合的設備
                         </td>
                     </tr>
@@ -174,6 +185,7 @@
                     var borrowQty = int.TryParse(item.EBorrowing_Quantity, out var bq) ? bq : 0;
                     var missingQty = int.TryParse(item.EMissing_quantity, out var mq) ? mq : 0;
                     var remainQty = int.TryParse(item.ERemaining_Quantity, out var rq) ? rq : 0;
+                    var damagedQty = int.TryParse(item.EDamaged_Quantity, out var dq) ? dq : 0;
                     <tr>
                         <td class="text-center text-muted">@rowNum</td>
                         <td>
@@ -239,6 +251,16 @@
                             @if (missingQty > 0)
                             {
                                 <span class="text-danger fw-semibold">@item.EMissing_quantity</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">0</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @if (damagedQty > 0)
+                            {
+                                <span class="fw-semibold" style="color:#343a40;">@item.EDamaged_Quantity</span>
                             }
                             else
                             {
@@ -335,13 +357,15 @@
                     return;
                 }
                 var html = '<div class="table-responsive"><table class="table table-sm table-hover mb-0" style="font-size:.82rem;">';
-                html += '<thead style="background:#f0f4f8;"><tr><th class="text-center" style="width:25%">編號</th><th class="text-center" style="width:25%">狀態</th><th style="width:50%">存放位置</th></tr></thead><tbody>';
+                html += '<thead style="background:#f0f4f8;"><tr><th class="text-center" style="width:20%">編號</th><th class="text-center" style="width:18%">狀態</th><th style="width:32%">存放位置</th><th style="width:30%">備註</th></tr></thead><tbody>';
                 data.forEach(function (item) {
                     var badge = '';
                     if (item.isBorrow === 'True') badge = '<span class="badge bg-warning text-dark">借用中</span>';
                     else if (item.isBorrow === 'Missing') badge = '<span class="badge bg-danger">遺失</span>';
+                    else if (item.isBorrow === 'Damaged') badge = '<span class="badge bg-dark">損壞</span>';
                     else badge = '<span class="badge bg-success">可借用</span>';
-                    html += '<tr><td class="text-center fw-semibold">' + escHtml(item.eId) + '</td><td class="text-center">' + badge + '</td><td><small>' + escHtml(item.eCurrent_Location) + '</small></td></tr>';
+                    var note = item.statusNote ? '<small class="text-muted">' + escHtml(item.statusNote) + '</small>' : '<small class="text-muted">-</small>';
+                    html += '<tr><td class="text-center fw-semibold">' + escHtml(item.eId) + '</td><td class="text-center">' + badge + '</td><td><small>' + escHtml(item.eCurrent_Location) + '</small></td><td>' + note + '</td></tr>';
                 });
                 html += '</tbody></table></div>';
                 document.getElementById('eidModalBody').innerHTML = html;

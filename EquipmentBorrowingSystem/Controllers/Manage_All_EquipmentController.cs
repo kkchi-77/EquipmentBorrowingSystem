@@ -132,7 +132,8 @@ namespace EquipmentBorrowingSystem.Controllers
             {
                 eId = d.EId,
                 isBorrow = d.IsBorrow,
-                eCurrent_Location = d.ECurrent_Location
+                eCurrent_Location = d.ECurrent_Location,
+                statusNote = d.StatusNote
             });
 
             return Json(result);
@@ -222,6 +223,7 @@ namespace EquipmentBorrowingSystem.Controllers
             equipment.EBorrowing_Quantity = "0";
             equipment.ERemaining_Quantity = EQuantity;
             equipment.EMissing_quantity = "0";
+            equipment.EDamaged_Quantity = "0";
             equipment.EQuantity_Unit = EQuantity_Unit;
             equipment.ESource = ESource;
             if (model.FileInput != null && model.FileInput.Length > 0)
@@ -346,6 +348,7 @@ namespace EquipmentBorrowingSystem.Controllers
             List<string> EId = model.EId;
             List<string> IsBorrow = model.IsBorrow;
             List<string> ECurrent_Location_update = model.ECurrent_Location_update;
+            List<string> StatusNote = model.StatusNote;
             string EQuantity_Unit = model.EQuantity_Unit;
             string ESource = model.ESource;
             string ESource_old = model.ESource_old;
@@ -354,6 +357,7 @@ namespace EquipmentBorrowingSystem.Controllers
 
             int eborrowing_quantity = 0;
             int emissing_quantity = 0;
+            int edamaged_quantity = 0;
             if (IsBorrow != null)
             {
                 foreach (string value in IsBorrow)
@@ -366,10 +370,13 @@ namespace EquipmentBorrowingSystem.Controllers
                     {
                         emissing_quantity++;
                     }
-
+                    else if (value == "Damaged")
+                    {
+                        edamaged_quantity++;
+                    }
                 }
             }
-            int eremaining_quantity = int.Parse(EQuantity) - eborrowing_quantity - emissing_quantity;
+            int eremaining_quantity = int.Parse(EQuantity) - eborrowing_quantity - emissing_quantity - edamaged_quantity;
             string Eborrowing_Quantity = eborrowing_quantity.ToString();
             string ERemaining_Quantity = eremaining_quantity.ToString();
             string EMissing_Quantity = emissing_quantity.ToString();
@@ -385,6 +392,7 @@ namespace EquipmentBorrowingSystem.Controllers
             equipment.EBorrowing_Quantity = Eborrowing_Quantity;
             equipment.ERemaining_Quantity = ERemaining_Quantity;
             equipment.EMissing_quantity = EMissing_Quantity;
+            equipment.EDamaged_Quantity = edamaged_quantity.ToString();
             equipment.EQuantity_Unit = EQuantity_Unit;
             equipment.ESource = ESource;
             if (model.FileInput != null && model.FileInput.Length > 0)
@@ -426,6 +434,7 @@ namespace EquipmentBorrowingSystem.Controllers
                             equipment_details[i].IsBorrow = IsBorrow[i];
                             equipment_details[i].ECurrent_Location = ECurrent_Location_update[i];
                             equipment_details[i].IsAddEquipment = IsBorrow[i];
+                            equipment_details[i].StatusNote = StatusNote != null && i < StatusNote.Count ? StatusNote[i] : null;
                         }
                     }
                     else if (equipment_details.Count < int.Parse(EQuantity))//增加設備總數量(增加不足的設備編號欄位)
@@ -441,6 +450,7 @@ namespace EquipmentBorrowingSystem.Controllers
                                 equipment_details[i].IsBorrow = IsBorrow[i];
                                 equipment_details[i].ECurrent_Location = ECurrent_Location_update[i];
                                 equipment_details[i].IsAddEquipment = IsBorrow[i];
+                                equipment_details[i].StatusNote = StatusNote != null && i < StatusNote.Count ? StatusNote[i] : null;
                             }
                             else if (i >= equipment_details.Count)
                             {

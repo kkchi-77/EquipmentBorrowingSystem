@@ -20,6 +20,7 @@ namespace EquipmentBorrowingSystem.ViewModel
         public List<string> EId { get; set; }
         public List<string> IsBorrow { get; set; }
         public List<string> ECurrent_Location_update { get; set; }
+        public List<string> StatusNote { get; set; }
         public string EQuantity_Unit { get; set; }
         public string ESource { get; set; }
         public string ESource_old { get; set; }

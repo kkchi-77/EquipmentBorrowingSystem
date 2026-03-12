@@ -25,6 +25,9 @@ namespace EquipmentBorrowingSystem.Models
         [Display(Name = "遺失數量")]
         public string EMissing_quantity { get; set; }
 
+        [Display(Name = "損壞數量")]
+        public string? EDamaged_Quantity { get; set; }
+
         [Display(Name = "數量單位")]
         public string EQuantity_Unit { get; set; }
         [Display(Name = "設備來源")]

@@ -104,10 +104,11 @@
                         <table class="table table-sm table-hover mb-0" style="font-size:.82rem;">
                             <thead style="background:#f0f4f8;">
                                 <tr>
-                                    <th class="text-center" style="width:6%">#</th>
-                                    <th style="width:22%">設備編號</th>
-                                    <th style="width:20%">借用狀態</th>
-                                    <th style="width:52%">設備存放位置</th>
+                                    <th class="text-center" style="width:5%">#</th>
+                                    <th style="width:16%">設備編號</th>
+                                    <th style="width:14%">設備狀態</th>
+                                    <th style="width:25%">狀態備註</th>
+                                    <th style="width:40%">設備存放位置</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -121,9 +122,9 @@
                                             <input type="text" name="EId[]" class="form-control form-control-sm" value="@d.EId" autocomplete="off" />
                                         </td>
                                         <td>
-                                            <select name="IsBorrow[]" class="form-select form-select-sm">
+                                            <select name="IsBorrow[]" class="form-select form-select-sm" onchange="toggleStatusNote(this)">
                                                 @{
-                                                    var borrowOptions = new[] { ("False", "未借出"), ("True", "借用中"), ("Missing", "遺失") };
+                                                    var borrowOptions = new[] { ("False", "未借出"), ("True", "借用中"), ("Missing", "遺失"), ("Damaged", "損壞") };
                                                 }
                                                 @foreach (var opt in borrowOptions)
                                                 {
@@ -137,6 +138,15 @@
                                                     }
                                                 }
                                             </select>
+                                        </td>
+                                        <td>
+                                            @{
+                                                var needNote = d.IsBorrow == "Missing" || d.IsBorrow == "Damaged";
+                                            }
+                                            <input type="text" name="StatusNote[]" class="form-control form-control-sm"
+                                                   value="@d.StatusNote" autocomplete="off"
+                                                   placeholder="@(needNote ? "請輸入原因說明" : "")"
+                                                   style="@(needNote ? "" : "background:#f8f9fa; color:#adb5bd;")" />
                                         </td>
                                         <td>
                                             <input type="text" name="ECurrent_Location_update[]" class="form-control form-control-sm" value="@d.ECurrent_Location" autocomplete="off" />
@@ -164,6 +174,20 @@
 
 @section Scripts {
 <script>
+    function toggleStatusNote(sel) {
+        var noteInput = sel.closest('tr').querySelector('input[name="StatusNote[]"]');
+        var needNote = sel.value === 'Missing' || sel.value === 'Damaged';
+        if (needNote) {
+            noteInput.style.background = '';
+            noteInput.style.color = '';
+            noteInput.placeholder = '請輸入原因說明';
+        } else {
+            noteInput.style.background = '#f8f9fa';
+            noteInput.style.color = '#adb5bd';
+            noteInput.placeholder = '';
+        }
+    }
+
     function toggleESourceOther() {
         var sel = document.getElementById('eSourceSelect');
         var custom = document.getElementById('eSourceCustom');

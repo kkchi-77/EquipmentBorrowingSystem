@@ -35,5 +35,8 @@ namespace EquipmentBorrowingSystem.Models
         [Display(Name = "是否加入申請清單")]
         public string IsAddEquipment { get; set; }
 
+        [Display(Name = "狀態備註")]
+        public string? StatusNote { get; set; }
+
     }
 }
